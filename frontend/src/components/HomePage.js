@@ -1,9 +1,11 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // dùg Function Component
 const HomePage = () => {
     // giao dien tra ve tu component
+    const navigate = useNavigate();
+    
     return (
         // ko bik JS =)))
         // phan nd nay dung tam cua GPT
@@ -26,7 +28,7 @@ const HomePage = () => {
                 {/* Nút hành động */}
                 <div style={{ marginTop: '30px' }}>
                     <button
-                        onClick={() => alert('Đi tới trang đăng nhập')}
+                        onClick={() => navigate('/login')}
                         style={{ marginRight: '20px', padding: '10px 20px' }}
                     >
                         🔐 Đăng nhập
