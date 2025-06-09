@@ -39,5 +39,43 @@ class LoginView(APIView):
             }, status=status.HTTP_200_OK)
         return Response({"error": "Tài khoản không tồn tại"}, status.HTTP_401_UNAUTHORIZED)
 
-def main(request): # this is the main func
-    return HttpResponse("<h1>Hello, world.</h1>")
+# --- CurrentUserDetailView (API MỚI) ---
+class CurrentUserDetailView(APIView):
+    permission_classes = [IsAuthenticated] # Yêu cầu user phải đăng nhập
+
+    def get(self, request, *args, **kwargs):
+        user = request.user # user là instance của TaiKhoan
+        # TaiKhoanPublicSerializer sẽ lấy permissions và groups (giả lập hoặc thật)
+        serializer = TaiKhoanPublicSerializer(user, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+# --- DashboardSummaryView (API MỚI) ---
+class DashboardSummaryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user # TaiKhoan instance
+        summary_data = {}
+        
+        # Lấy vai trò từ user để giả lập (giá trị key, ví dụ: 'manager', 'med_staff')
+        user_role_value = user.vai_tro.ten_vai_tro if user.vai_tro else None
+
+        if user_role_value == 'manager':
+            summary_data['daily_appointments'] = 30 # Dữ liệu giả
+            summary_data['daily_revenue'] = 25500000 # Dữ liệu giả
+        elif user_role_value == 'med_staff':
+            summary_data['daily_appointments'] = 30 # Dữ liệu giả
+            # Nhân viên y tế không thấy doanh thu
+        
+        # Khi có quyền thật (Giai đoạn 3), bạn sẽ dùng:
+        # if user.has_perm('appointments.view_daily_appointment_count'):
+        #     summary_data['daily_appointments'] = ...
+        # if user.has_perm('reports.view_daily_revenue_summary'):
+        #     summary_data['daily_revenue'] = ...
+
+        if not summary_data and user_role_value not in ['manager', 'med_staff']:
+             return Response({"message": "Bạn không có quyền xem thông tin tóm tắt."}, status=200)
+        elif not summary_data and user_role_value in ['manager', 'med_staff']:
+             return Response({"message": "Không có thông tin tóm tắt nào cho vai trò của bạn."}, status=200)
+
+        return Response(summary_data, status=status.HTTP_200_OK)

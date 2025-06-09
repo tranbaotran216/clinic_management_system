@@ -28,9 +28,14 @@ class TaiKhoanManager(BaseUserManager):
         user.save(using=self._db)
         return user
     # tạo tk quản lý
-    def create_superuser(self, ten_dang_nhap, email, password=None, **extra_fields): 
-        user = self.create_user(ten_dang_nhap, email, password, is_staff=True, is_superuser=True)
+    def create_superuser(self, ten_dang_nhap, email, password=None, **extra_fields):
+        if 'vai_tro' not in extra_fields or not extra_fields['vai_tro']:
+            extra_fields['vai_tro'] = VaiTro.objects.get(ten_vai_tro='manager')
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self.create_user(ten_dang_nhap, email, password, **extra_fields)
 
+    
 # định n cấu trúc
 class TaiKhoan(AbstractBaseUser, PermissionsMixin):
     ho_ten = models.CharField(max_length=100)

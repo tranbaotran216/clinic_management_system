@@ -1,80 +1,151 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useContext, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Form,
+  Input,
+  Button,
+  Card,
+  Typography,
+  Alert,
+  Space,
+} from 'antd';
+import { UserOutlined, LockOutlined, LoginOutlined } from '@ant-design/icons';
+import { AuthContext } from './App';
+
+const { Title, Text } = Typography;
 
 const LoginPage = () => {
-    const navigate = useNavigate();
-    const [tenDangNhap, setTenDangNhap] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login, currentUser } = useContext(AuthContext);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        try {
-            const response = await axios.post('/quan-ly-tai-khoan/login/', {
-                ten_dang_nhap: tenDangNhap,
-                password: password,
-            });
+  const from = location.state?.from?.pathname || '/dashboard';
 
-            localStorage.setItem('access', response.data.access);
-            localStorage.setItem('refresh', response.data.refresh);
-            localStorage.setItem('userRole', response.data.user.vai_tro); // Lưu vai trò
+  useEffect(() => {
+    if (currentUser) {
+      navigate(from, { replace: true });
+    }
+  }, [currentUser, navigate, from]);
 
-            // Chuyển hướng theo vai trò
-            if (response.data.user.vai_tro === 'manager') {
-                navigate('/managerdashboard');
-            } else if (response.data.user.vai_tro === 'med_staff') {
-                navigate('/staffdashboard');
-            } else {
-                navigate('/');
-            }
+  const onFinish = async (values) => {
+    setError('');
+    setLoading(true);
+    try {
+      const success = await login({
+        ten_dang_nhap: values.tenDangNhap,
+        password: values.password,
+      });
 
-        } catch (err) {
-            if (err.response) {
-                setError(err.response.data.detail || err.response.data.error || 'Tên đăng nhập hoặc mật khẩu không đúng.');
-                console.error('Login API error:', err.response.data);
-            } else if (err.request) {
-                setError('Không nhận được phản hồi từ server. Vui lòng kiểm tra kết nối mạng.');
-                console.error('No response received:', err.request);
-            } else {
-                setError('Lỗi khi gửi yêu cầu đăng nhập: ' + err.message);
-                console.error('Request setup error:', err.message);
-            }
-        }
-    };
+      if (success) {
+        navigate(from, { replace: true });
+      } else {
+        setError('Tên đăng nhập hoặc mật khẩu không đúng.');
+      }
+    } catch (err) {
+      setError('Đã xảy ra lỗi trong quá trình đăng nhập.');
+      console.error("Login error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div style={{ maxWidth: 400, margin: '60px auto', padding: 32, border: '1px solid #eee', borderRadius: 8 }}>
-            <h2>Đăng nhập</h2>
-            <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: 16 }}>
-                    <input
-                        type="text"
-                        placeholder="Tên đăng nhập"
-                        value={tenDangNhap}
-                        onChange={e => setTenDangNhap(e.target.value)}
-                        required
-                        style={{ width: '100%', padding: 8 }}
-                    />
-                </div>
-                <div style={{ marginBottom: 16 }}>
-                    <input
-                        type="password"
-                        placeholder="Mật khẩu"
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        required
-                        style={{ width: '100%', padding: 8 }}
-                    />
-                </div>
-                <button type="submit" style={{ width: '100%', padding: 10, background: '#1976d2', color: '#fff', border: 'none', borderRadius: 4 }}>
-                    Đăng nhập
-                </button>
-                {error && <div style={{ color: 'red', marginTop: 12 }}>{error}</div>}
-            </form>
+  const onFinishFailed = (errorInfo) => {
+    console.log('Validation Failed:', errorInfo);
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #e3f2fd, #fff)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '24px',
+      }}
+    >
+      <Card
+        style={{
+          width: '100%',
+          maxWidth: 420,
+          borderRadius: 12,
+          boxShadow: '0 6px 24px rgba(0,0,0,0.08)',
+        }}
+        bodyStyle={{ padding: '32px' }}
+      >
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <LoginOutlined style={{ fontSize: 32, color: '#1890ff' }} />
+          <Title level={3} style={{ marginTop: 16 }}>
+            Đăng nhập hệ thống
+          </Title>
+          <Text type="secondary">Vui lòng nhập thông tin để tiếp tục</Text>
         </div>
-    );
+
+        <Form
+          name="login_form"
+          layout="vertical"
+          onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
+        >
+          {error && (
+            <Form.Item>
+              <Alert
+                message={error}
+                type="error"
+                showIcon
+                closable
+                onClose={() => setError('')}
+              />
+            </Form.Item>
+          )}
+
+          <Form.Item
+            label="Tên đăng nhập"
+            name="tenDangNhap"
+            rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}
+          >
+            <Input
+              prefix={<UserOutlined />}
+              placeholder="Nhập tên đăng nhập"
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item
+            label="Mật khẩu"
+            name="password"
+            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder="Nhập mật khẩu"
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              size="large"
+              loading={loading}
+              style={{ width: '100%' }}
+            >
+              Đăng nhập
+            </Button>
+          </Form.Item>
+        </Form>
+
+        <div style={{ textAlign: 'center', marginTop: 16 }}>
+          <Text type="secondary">
+            Chưa có tài khoản? Hãy liên hệ quản trị viên để được cấp quyền.
+          </Text>
+        </div>
+      </Card>
+    </div>
+  );
 };
 
 export default LoginPage;
