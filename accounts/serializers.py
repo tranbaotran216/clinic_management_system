@@ -4,6 +4,7 @@ from .models import TaiKhoan, VaiTro, BenhNhan, DSKham, PKB, ChiTietPKB, LoaiBen
 
 # dùng public để xem, ko show password
 class TaiKhoanPublicSerializer(serializers.ModelSerializer):
+    vai_tro = serializers.CharField(source='vai_tro.ten_vai_tro')
     class Meta:
         model = TaiKhoan
         fields = ['id', 'ho_ten', 'email', 'ten_dang_nhap', 'vai_tro']
