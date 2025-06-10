@@ -1,11 +1,9 @@
 from rest_framework.permissions import BasePermission
 
-# xác thực danh tính thành công thì is_authenticated = True
 class isManager(BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.vai_tro == 'manager'
-    
+        return request.user.is_authenticated and getattr(request.user.vai_tro, 'ten_vai_tro', None) == 'manager'
+
 class isMedStaff(BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.vai_tro == 'med_staff'
-    
+        return request.user.is_authenticated and getattr(request.user.vai_tro, 'ten_vai_tro', None) == 'med_staff'

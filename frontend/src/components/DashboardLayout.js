@@ -25,8 +25,8 @@ const rawMenuConfig = [
     label: 'Quản lý Thuốc',
     icon: <MedicineBoxOutlined />,
     children: [
-      { key: 'medications-inventory', label: 'QL Kho Thuốc', path: 'medications/inventory', icon: <MedicineBoxOutlined />, permission: 'medications.manage_inventory' },
-      { key: 'medications-usage', label: 'Kê sử dụng thuốc', path: 'medications/usage', icon: <ExperimentOutlined />, permission: 'medications.view_usage_reports' },
+      { key: 'medications-inventory', label: 'Quản lý Kho Thuốc', path: 'medications/inventory', icon: <MedicineBoxOutlined />, permission: 'medications.manage_inventory' },
+      { key: 'medications-usage', label: 'Thống kê sử dụng thuốc', path: 'medications/usage', icon: <ExperimentOutlined />, permission: 'medications.view_usage_reports' },
       { key: 'medications-search', label: 'Tra cứu thuốc', path: 'medications/search', icon: <SearchOutlined />, permission: 'medications.search_inventory' },
     ]
   },
