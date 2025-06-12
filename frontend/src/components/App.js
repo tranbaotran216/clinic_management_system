@@ -159,7 +159,6 @@ export default function App() {
                             {/* Route để xem trang quản lý vai trò. Vẫn nằm trong đây */}
                             {/* vì nếu user có quyền xem tài khoản, họ cũng nên thấy mục này. */}
                             {/* Logic hiển thị menu vẫn do DashboardLayout quyết định. */}
-                            <Route path="roles-permissions" element={<RolesPage />} />
                         </Route>
 
                         {/* 2. Quản lý danh sách khám */}

@@ -93,3 +93,4 @@ export const permissionTranslations = {
 export const getPermissionTranslation = (codename) => {
   return permissionTranslations[codename] || codename;
 };
+
