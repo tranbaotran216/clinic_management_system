@@ -1,0 +1,218 @@
+@font-face {
+    font-family: 'Open Sans';
+    src: url('../asset/OpenSans-VariableFont_wdth,wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+.homepage-new-container {
+    font-family: "Open Sans", sans-serif;
+}
+
+/* NavbarNew Styles */
+.navbar-new {
+  display: flex;
+  justify-content: space-between; /* Đẩy logo sang trái, menu giữa, actions sang phải */
+  align-items: center; /* Căn giữa các item theo chiều dọc */
+  padding: 15px 40px;  /* Tăng padding ngang, ví dụ 40px */
+  background-color: #fff;
+  /* box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Thêm bóng đổ nhẹ nếu muốn */
+  height: 80px; /* Hoặc chiều cao phù hợp để chứa logo 80x80 và các item */
+}
+
+.navbar-new-logo img {
+  /* width: 50px; /* Điều chỉnh kích thước logo nếu 80px quá lớn so với thiết kế mong muốn */
+  /* height: 50px; */
+  display: block; /* Giúp căn chỉnh tốt hơn */
+}
+
+.navbar-new-menu {
+  display: flex;
+  gap: 80px; /* Khoảng cách giữa các menu item, ví dụ 80px */
+  flex-grow: 1; /* Cho phép menu chiếm không gian ở giữa */
+  justify-content: center; /* Căn giữa các menu item */
+  align-items: center;
+}
+
+.navbar-new-item {
+  text-decoration: none;
+  color: #333333; /* Màu chữ đen/xám đậm */
+  font-weight: 600; /* Hoặc 600 nếu muốn đậm hơn */
+  font-size: 20px; /* Kích thước font chữ */
+  padding: 8px 0; /* Padding trên dưới cho vùng click và gạch chân */
+  position: relative; /* Để định vị gạch chân */
+}
+
+.navbar-new-item:hover {
+  color: #58B6FF; /* Màu khi hover, tùy chọn */
+}
+
+/* Style cho link active - bạn cần dùng NavLink từ react-router-dom */
+.navbar-new-item.active {
+  color: #333333; /* Màu chữ của link active */
+  font-weight: 600; /* Có thể làm đậm hơn */
+}
+
+.navbar-new-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0; /* Đặt gạch chân ở dưới cùng của item */
+  left: 0;
+  width: 100%;
+  height: 3px; /* Độ dày gạch chân */
+  background-color: #A076F9; /* Màu tím cho gạch chân */
+  border-radius: 2px;
+}
+
+
+.navbar-new-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px; /* Khoảng cách giữa các nút actions */
+}
+
+.navbar-new-button {
+    padding: 12px 32px; /* Tăng padding cho nút to hơn và nhích qua trái */
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 300; /* Chữ không in đậm */
+    font-size: 18px; /* Chữ to hơn */
+    border: 1.5px solid transparent;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 130px; /* Đảm bảo độ rộng tối thiểu lớn hơn */
+    text-align: center;
+    margin-left: -8px; /* Nhích qua trái một chút */
+}
+
+.login-button {
+  background-color: #fff;
+  color: #58B6FF; /* Màu chữ xanh nhạt */
+  border-color: #58B6FF; /* Viền xanh nhạt */
+}
+
+.login-button:hover {
+  background-color: #eef8ff; /* Màu nền nhạt khi hover */
+  border-color: #3a9de0; /* Viền đậm hơn khi hover */
+  color: #3a9de0;
+}
+
+.register-button {
+  background-color: #58B6FF; /* Nền xanh nhạt */
+  color: #fff;
+  border-color: #58B6FF; /* Đảm bảo viền cùng màu hoặc không có viền */
+}
+
+.register-button:hover {
+  background-color: #3a9de0; /* Nền đậm hơn khi hover */
+  border-color: #3a9de0;
+}
+
+
+/* ================================================================================== */
+/* HeroSectionNew Styles */
+.hero-section-new {
+background-image: url('../asset/homepage.gif');
+background-size: cover;
+background-repeat: no-repeat;
+background-position: center;
+  background-size: cover;
+  background-position: center;
+  padding: 60px 40px; /* Tăng padding ngang */
+  min-height: calc(100vh - 80px); /* Chiều cao viewport trừ đi chiều cao navbar (80px) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative; /* Cho các element trang trí nếu có */
+  overflow: hidden; /* Tránh các element trang trí tràn ra ngoài */
+}
+
+.hero-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Đẩy text và image ra xa nhau */
+  width: 100%;
+  max-width: 1200px;
+  gap: 40px; /* Khoảng cách giữa text-column và image-column */
+}
+
+.hero-text {
+  flex-basis: 55%; /* Cho phần text chiếm nhiều không gian hơn một chút */
+  color: #7B66FF; /* Màu chữ mặc định cho phần text */
+}
+
+.hero-title-main {
+  font-size: 3.5rem; /* Tăng kích thước font */
+  color: #7B66FF; /* Màu tím nhạt hơn (ví dụ BlueViolet), bạn cần mã màu chính xác */
+  /* Hoặc một màu xanh dương khác như: color: #4A90E2; */
+  margin-bottom: 15px;
+  font-weight: 700; /* Đậm hơn */
+  line-height: 1.2;
+}
+
+.hero-tagline {
+  font-size: 2.5rem; /* Tăng kích thước font */
+  color: #000000; /* Màu đen */
+  margin-bottom: 40px; /* Tăng khoảng cách dưới */
+  line-height: 1.3;
+  font-weight: 900; /* Rất đậm */
+}
+
+/* --- Styling cho phần contact-info theo Hình 2 --- */
+.hero-contact-info {
+  display: flex;
+  flex-direction: column; /* Các item xếp chồng lên nhau */
+  gap: 15px; /* Khoảng cách giữa các "viên thuốc" contact item */
+  align-items: flex-start; /* Căn các viên thuốc về bên trái */
+}
+
+.contact-item {
+    background: rgba(255, 255, 255, 0.8); /* Nền trắng mờ 80% */
+    border-radius: 30px;
+    padding: 8px 10px;  /* Padding ngắn lại */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1rem;
+    color: #555;
+    min-width: 280px;
+}
+
+.contact-icon {
+  width: 24px;   /* Kích thước icon */
+  height: 24px;
+  object-fit: contain;
+  /* 
+    Nếu muốn icon đơn sắc như trong Hình 2 (ví dụ màu tím):
+    Bạn sẽ cần file ảnh icon SVG hoặc PNG đã đổi màu, 
+    HOẶC nếu là SVG, bạn có thể dùng CSS `filter` hoặc `fill`.
+    Ví dụ cho SVG:
+    filter: invert(55%) sepia(87%) saturate(3069%) hue-rotate(240deg) brightness(95%) contrast(90%); 
+    (filter này sẽ cố gắng đổi thành màu tím, cần tinh chỉnh)
+  */
+}
+
+
+.hero-image-container {
+  flex-basis: 45%;
+  display: flex;
+  justify-content: center; /* Hoặc flex-end nếu muốn ảnh lệch phải */
+  align-items: center;
+}
+
+.hero-image {
+  max-width: 100%; /* Đảm bảo ảnh không vượt quá container */
+  height: auto;   /* Giữ tỷ lệ ảnh */
+  /* Nếu muốn kích thước cố định như bạn đã set inline: */
+  width: 450px; /* Tăng kích thước ảnh theo Hình 2 */
+  height: 450px;
+  object-fit: cover; /* Hoặc contain, tùy bạn muốn ảnh hiển thị thế nào */
+  border-radius: 15px; /* Bo góc nhẹ cho ảnh bác sĩ nếu muốn */
+}
+
+/* Thêm các style cho icon, font, màu sắc, responsive... */
