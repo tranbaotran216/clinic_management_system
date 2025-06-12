@@ -1,3 +1,5 @@
+// frontend/src/App.js
+
 // --- THƯ VIỆN REACT & ROUTER ---
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom';
@@ -24,15 +26,14 @@ import AccountsPage from "./AccountsPage";
 import AppointmentsPage from "./AppointmentsPage";
 import DashboardHomepage from "./DashboardHomepage";
 import RolesPage from "./RolesPage";
+// ... các component trang khác
 
-
-// --- AUTH PROVIDER COMPONENT ---
+// --- AUTH PROVIDER COMPONENT (GIỮ NGUYÊN) ---
 const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);
     const [loadingAuth, setLoadingAuth] = useState(true);
 
     const fetchCurrentUser = async () => {
-        setLoadingAuth(true);
         const token = localStorage.getItem('authToken');
         if (!token) {
             setCurrentUser(null);
@@ -40,26 +41,27 @@ const AuthProvider = ({ children }) => {
             return;
         }
         try {
-            const response = await fetch('api/auth/me/', {
+            setLoadingAuth(true); 
+            const response = await fetch('/api/auth/me/', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
                 const data = await response.json();
                 setCurrentUser(data);
             } else {
-                setCurrentUser(null);
                 localStorage.removeItem('authToken');
+                setCurrentUser(null);
             }
         } catch (error) {
-            setCurrentUser(null);
+            console.error("Lỗi khi fetch user:", error);
             localStorage.removeItem('authToken');
+            setCurrentUser(null);
         } finally {
             setLoadingAuth(false);
         }
     };
 
     const login = async (credentials) => {
-        setLoadingAuth(true);
         try {
             const response = await fetch('/api/login/', {
                 method: 'POST',
@@ -74,9 +76,8 @@ const AuthProvider = ({ children }) => {
             }
             return false;
         } catch (error) {
+            console.error("Lỗi đăng nhập:", error);
             return false;
-        } finally {
-            setLoadingAuth(false);
         }
     };
 
@@ -91,14 +92,6 @@ const AuthProvider = ({ children }) => {
 
     const authContextValue = { currentUser, loadingAuth, login, logout, fetchCurrentUser };
 
-    if (loadingAuth) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <Spin size="large" />
-            </div>
-        );
-    }
-
     return (
         <AuthContext.Provider value={authContextValue}>
             {children}
@@ -106,7 +99,7 @@ const AuthProvider = ({ children }) => {
     );
 };
 
-// --- REQUIRE AUTH COMPONENT ---
+// --- REQUIRE AUTH COMPONENT (GIỮ NGUYÊN) ---
 const RequireAuth = ({ children }) => {
     const { currentUser, loadingAuth } = useContext(AuthContext);
     const location = useLocation();
@@ -127,20 +120,20 @@ const RequireAuth = ({ children }) => {
 };
 
 
-// --- APP COMPONENT ---
+// --- APP COMPONENT (ĐÃ CẤU TRÚC LẠI ROUTE TÀI KHOẢN) ---
 export default function App() {
     return (
         <AuthProvider>
             <Router>
                 <Routes>
-                    {/* Các route công khai */}
+                    {/* ===== CÁC ROUTE CÔNG KHAI ===== */}
                     <Route path="/" element={<HomePage />} />
                     <Route path="/services" element={<Services />} />
                     <Route path="/intro" element={<Intro />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/unauthorized" element={<UnAuthorized />} />
 
-                    {/* Route chính cho Dashboard, được bảo vệ bởi RequireAuth */}
+                    {/* ===== ROUTE CHÍNH CHO DASHBOARD, ĐƯỢC BẢO VỆ ===== */}
                     <Route
                         path="/dashboard"
                         element={
@@ -152,27 +145,68 @@ export default function App() {
                         {/* Trang chủ mặc định của dashboard */}
                         <Route index element={<DashboardHomepage />} />
 
-                        {/* Các route con được bảo vệ bởi PrivateRoute với permission cụ thể */}
-                        <Route element={<PrivateRoute requiredPermission="auth.view_group" />}>
+                        {/* --- CÁC ROUTE CON ĐƯỢC BẢO VỆ BỞI PERMISSION CỤ THỂ --- */}
+                        
+                        {/* =================================================================== */}
+                        {/* 1. Quản lý Tài khoản & Vai trò (nhóm chung) */}
+                        {/* PrivateRoute này sẽ kiểm tra quyền xem tài khoản, nếu có quyền này */}
+                        {/* thì mới cho vào các route con bên trong. */}
+                        {/* =================================================================== */}
+                        <Route element={<PrivateRoute requiredPermission="accounts.view_taikhoan" />}>
+                            {/* Route để xem trang quản lý tài khoản */}
+                            <Route path="accounts" element={<AccountsPage />} />
+                            
+                            {/* Route để xem trang quản lý vai trò. Vẫn nằm trong đây */}
+                            {/* vì nếu user có quyền xem tài khoản, họ cũng nên thấy mục này. */}
+                            {/* Logic hiển thị menu vẫn do DashboardLayout quyết định. */}
                             <Route path="roles-permissions" element={<RolesPage />} />
                         </Route>
 
-                        <Route element={<PrivateRoute requiredPermission="auth.view_user" />}>
-                            <Route path="accounts" element={<AccountsPage />} />
-                        </Route>
-                        
-                        <Route element={<PrivateRoute requiredPermission="patients.manage_patient_waiting_list" />}>
+                        {/* 2. Quản lý danh sách khám */}
+                        <Route element={<PrivateRoute requiredPermission="accounts.view_dskham" />}>
                             <Route path="appointments" element={<AppointmentsPage />} />
                         </Route>
 
-                        {/* Thêm các route con khác ở đây */}
-                        {/* ... */}
-                        
-                        {/* Route 404 cho các đường dẫn không khớp bên trong /dashboard */}
-                        <Route path="*" element={<h2>404 - Trang không tồn tại</h2>} />
+                        {/* 3. Quản lý phiếu khám bệnh */}
+                        <Route element={<PrivateRoute requiredPermission="accounts.view_pkb" />}>
+                            <Route path="medical-records" element={<h2>Trang Quản lý Phiếu khám bệnh</h2>} />
+                        </Route>
+
+                        {/* 4. Quản lý Thuốc (các route con) */}
+                        <Route element={<PrivateRoute requiredPermission="accounts.view_thuoc" />}>
+                            <Route path="medications/inventory" element={<h2>Trang Quản lý Kho thuốc</h2>} />
+                            <Route path="medications/search" element={<h2>Trang Tra cứu thuốc</h2>} />
+                        </Route>
+                        <Route element={<PrivateRoute requiredPermission="accounts.add_chitietpkb" />}>
+                            <Route path="medications/usage" element={<h2>Trang Kê đơn thuốc</h2>} />
+                        </Route>
+
+                        {/* 5. Xem hóa đơn */}
+                        <Route element={<PrivateRoute requiredPermission="accounts.view_hoadon" />}>
+                            <Route path="billing" element={<h2>Trang Xem hóa đơn</h2>} />
+                        </Route>
+
+                        {/* 6. Báo cáo & Thống kê */}
+                        <Route element={<PrivateRoute requiredPermission="accounts.view_hoadon" />}>
+                             <Route path="reports" element={<h2>Trang Báo cáo & Thống kê</h2>} />
+                        </Route>
+
+                        {/* 7. Quản lý Danh mục (các route con) */}
+                         <Route element={<PrivateRoute requiredPermission="accounts.view_loaibenh" />}>
+                            <Route path="regulations/diseases" element={<h2>Trang Quản lý Loại Bệnh</h2>} />
+                        </Route>
+                         <Route element={<PrivateRoute requiredPermission="accounts.view_donvitinh" />}>
+                            <Route path="regulations/units" element={<h2>Trang Quản lý Đơn Vị Tính</h2>} />
+                        </Route>
+                         <Route element={<PrivateRoute requiredPermission="accounts.view_cachdung" />}>
+                            <Route path="regulations/usages" element={<h2>Trang Quản lý Cách Dùng</h2>} />
+                        </Route>
+
+                        {/* Route 404 cho các đường dẫn không khớp BÊN TRONG /dashboard */}
+                        <Route path="*" element={<h2>404 - Trang bạn tìm không tồn tại trong khu vực quản lý.</h2>} />
                     </Route>
 
-                    {/* Route 404 ở cấp cao nhất, redirect về trang chủ */}
+                    {/* Route 404 ở CẤP CAO NHẤT, redirect về trang chủ */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Router>

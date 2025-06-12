@@ -23,53 +23,71 @@ const AccountsPage = () => {
     const [userForm] = Form.useForm();
     const [globalSearchText, setGlobalSearchText] = useState('');
 
-    // --- QUYỀN HẠN ---
-    const canViewAccounts = currentUser?.permissions?.includes('auth.view_user');
-    const canAddAccounts = currentUser?.permissions?.includes('auth.add_user');
-    const canChangeAccounts = currentUser?.permissions?.includes('auth.change_user');
-    const canDeleteAccounts = currentUser?.permissions?.includes('auth.delete_user');
+    // --- QUYỀN HẠN (ĐÃ SỬA LẠI TÊN QUYỀN CHO ĐÚNG) ---
+    const canViewAccounts = currentUser?.permissions?.includes('accounts.view_taikhoan');
+    const canAddAccounts = currentUser?.permissions?.includes('accounts.add_taikhoan');
+    const canChangeAccounts = currentUser?.permissions?.includes('accounts.change_taikhoan');
+    const canDeleteAccounts = currentUser?.permissions?.includes('accounts.delete_taikhoan');
 
     // --- FETCH DATA ---
     const fetchData = async () => {
+        // Điều kiện if này đã đúng, không cần thay đổi
         if (!canViewAccounts) return;
         setLoading(true);
         try {
             const token = localStorage.getItem('authToken');
             const headers = { 'Authorization': `Bearer ${token}` };
+            
+            // Dùng Promise.all để gọi 2 API song song cho hiệu quả
             const [usersResponse, groupsResponse] = await Promise.all([
                 fetch('/api/users/', { headers }),
                 fetch('/api/groups/', { headers })
             ]);
 
+            // Xử lý kết quả trả về từ API users
             if (usersResponse.ok) {
                 const usersData = await usersResponse.json();
+                // API của DRF ViewSet thường trả về một object có key 'results' nếu có phân trang
                 setUsers(Array.isArray(usersData) ? usersData : usersData.results || []);
-            } else { message.error(`Tải DS tài khoản thất bại (Lỗi ${usersResponse.status})`); }
+            } else { 
+                message.error(`Tải DS tài khoản thất bại (Lỗi ${usersResponse.status})`); 
+            }
 
+            // Xử lý kết quả trả về từ API groups
             if (groupsResponse.ok) {
                 const groupsData = await groupsResponse.json();
                 setGroups(Array.isArray(groupsData) ? groupsData : groupsData.results || []);
-            } else { message.error(`Tải DS vai trò thất bại (Lỗi ${groupsResponse.status})`); }
-        } catch (error) { message.error('Lỗi khi tải dữ liệu: ' + error.message); }
-        setLoading(false);
+            } else { 
+                message.error(`Tải DS vai trò thất bại (Lỗi ${groupsResponse.status})`); 
+            }
+        } catch (error) { 
+            message.error('Lỗi khi tải dữ liệu: ' + error.message); 
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
-        if (canViewAccounts) fetchData();
-    }, [canViewAccounts]);
+        // Chỉ gọi fetchData nếu user có quyền xem
+        if (canViewAccounts) {
+            fetchData();
+        }
+    }, [canViewAccounts]); // Dependency array đã đúng
 
     // --- XỬ LÝ MODAL THÊM/SỬA USER ---
     const showUserModal = (user = null) => {
         setEditingUser(user);
         if (user) {
+            // Khi sửa, điền thông tin user vào form
             userForm.setFieldsValue({
                 ho_ten: user.ho_ten,
                 email: user.email,
                 ten_dang_nhap: user.ten_dang_nhap,
-                groups: user.groups.map(g => g.id),
+                groups: user.groups.map(g => g.id), // Lấy mảng ID của các group
                 is_active: user.is_active,
             });
         } else {
+            // Khi thêm mới, reset form và đặt trạng thái mặc định
             userForm.resetFields();
             userForm.setFieldsValue({ is_active: true });
         }
@@ -85,38 +103,58 @@ const AccountsPage = () => {
             if (editingUser) url += `${editingUser.id}/`;
 
             let payload = { ...values };
+            // Nếu đang sửa và không nhập mật khẩu mới, thì không gửi trường password
             if (editingUser && (!values.password || values.password.trim() === '')) {
                 delete payload.password;
                 delete payload.password2;
             }
 
-            const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
+            const response = await fetch(url, { 
+                method, 
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+                body: JSON.stringify(payload) 
+            });
+
             if (response.ok) {
                 message.success(`Đã ${editingUser ? 'cập nhật' : 'tạo'} tài khoản thành công!`);
                 setIsUserModalVisible(false);
-                fetchData();
+                fetchData(); // Tải lại dữ liệu mới
             } else {
+                // Hiển thị lỗi từ backend một cách chi tiết hơn
                 const errorData = await response.json().catch(() => ({}));
                 message.error(`Lỗi: ` + (errorData.detail || Object.values(errorData).flat().join(' ')), 7);
             }
-        } catch (errorInfo) { console.log('Validation/API error:', errorInfo); }
+        } catch (errorInfo) { 
+            console.log('Lỗi validation hoặc API:', errorInfo); 
+        }
     };
 
-    const handleUserModalCancel = () => { setIsUserModalVisible(false); userForm.resetFields(); };
+    const handleUserModalCancel = () => { 
+        setIsUserModalVisible(false); 
+        userForm.resetFields(); 
+    };
 
     // --- XỬ LÝ XÓA USER ---
     const handleDeleteUser = async (userId) => {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`/api/users/${userId}/`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-            if (response.status === 204 || response.ok) {
+            const response = await fetch(`/api/users/${userId}/`, { 
+                method: 'DELETE', 
+                headers: { 'Authorization': `Bearer ${token}` } 
+            });
+            if (response.status === 204 || response.ok) { // 204 No Content là response thành công cho DELETE
                 message.success('Xóa tài khoản thành công!');
                 fetchData();
-            } else { message.error((await response.json().catch(() => ({}))).detail || 'Lỗi khi xóa tài khoản.'); }
-        } catch (error) { message.error('Lỗi kết nối khi xóa.'); }
+            } else { 
+                const errorData = await response.json().catch(() => ({}));
+                message.error(errorData.detail || 'Lỗi khi xóa tài khoản.'); 
+            }
+        } catch (error) { 
+            message.error('Lỗi kết nối khi xóa.'); 
+        }
     };
 
-    // --- LỌC VÀ ĐỊNH NGHĨA BẢNG ---
+    // --- LỌC DỮ LIỆU ĐỂ HIỂN THỊ TRÊN BẢNG ---
     const filteredDataSource = users.filter(user => {
         if (!globalSearchText) return true;
         const searchTextLower = globalSearchText.toLowerCase();
@@ -127,6 +165,7 @@ const AccountsPage = () => {
         );
     });
 
+    // --- ĐỊNH NGHĨA CÁC CỘT CHO BẢNG ---
     const columns = [
         { title: 'ID', dataIndex: 'id', key: 'id', sorter: (a, b) => a.id - b.id, width: 80, fixed: 'left' },
         { title: 'Họ tên', dataIndex: 'ho_ten', key: 'ho_ten', sorter: (a, b) => a.ho_ten.localeCompare(b.ho_ten) },
@@ -148,6 +187,7 @@ const AccountsPage = () => {
             render: (_, record) => (
                 <Space size="middle">
                     {canChangeAccounts && (<Tooltip title="Sửa"><Button type="link" icon={<EditOutlined />} onClick={() => showUserModal(record)} /></Tooltip>)}
+                    {/* Không cho phép user tự xóa chính mình */}
                     {canDeleteAccounts && currentUser && record.id !== currentUser.id && (
                         <Popconfirm title="Xóa tài khoản?" description={`Xóa "${record.ten_dang_nhap}"?`} onConfirm={() => handleDeleteUser(record.id)} okText="Xóa" okType="danger" cancelText="Hủy">
                             <Tooltip title="Xóa"><Button type="link" danger icon={<DeleteOutlined />} /></Tooltip>
@@ -158,10 +198,12 @@ const AccountsPage = () => {
         },
     ];
 
+    // Nếu không có quyền xem, hiển thị thông báo lỗi
     if (!canViewAccounts) {
         return <Alert message="Truy cập bị từ chối" description="Bạn không có quyền quản lý tài khoản." type="error" showIcon />;
     }
 
+    // Nếu có quyền, render ra giao diện quản lý
     return (
         <div>
             <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
@@ -198,9 +240,10 @@ const AccountsPage = () => {
                     <Form.Item name="is_active" label="Trạng thái" initialValue={true}>
                         <Select><Option value={true}>Hoạt động</Option><Option value={false}>Khóa</Option></Select>
                     </Form.Item>
-                    <Form.Item name="password" label={editingUser ? "Mật khẩu mới (để trống)" : "Mật khẩu"} rules={editingUser ? [{ min: 6, message: 'Mật khẩu ít nhất 6 ký tự nếu nhập!'}] : [{ required: true, message: 'Vui lòng nhập mật khẩu!' }, { min: 6, message: 'Mật khẩu ít nhất 6 ký tự!'}]} hasFeedback><Input.Password /></Form.Item>
+                    <Form.Item name="password" label={editingUser ? "Mật khẩu mới (để trống nếu không đổi)" : "Mật khẩu"} rules={editingUser ? [{ min: 6, message: 'Mật khẩu ít nhất 6 ký tự nếu nhập!'}] : [{ required: true, message: 'Vui lòng nhập mật khẩu!' }, { min: 6, message: 'Mật khẩu ít nhất 6 ký tự!'}]} hasFeedback><Input.Password /></Form.Item>
                     <Form.Item name="password2" label="Xác nhận mật khẩu" dependencies={['password']} hasFeedback rules={[
                         ({ getFieldValue }) => ({
+                            // Chỉ yêu cầu xác nhận nếu có nhập mật khẩu mới
                             required: !!getFieldValue('password'),
                             message: 'Vui lòng xác nhận mật khẩu!'
                         }),
