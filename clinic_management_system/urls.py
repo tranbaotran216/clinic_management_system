@@ -19,6 +19,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('quan-ly-tai-khoan/', include('accounts.urls')), # link accounts/ -> tự động nhảy tới accounts.urls
+    path('api/', include('accounts.urls')),
     path('', include('frontend.urls')) # frontend/urls.py cùng cấp
 ]

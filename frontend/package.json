@@ -23,6 +23,7 @@
     "webpack-dev-server": "^4.15.2"
   },
   "dependencies": {
+    "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@babel/plugin-transform-class-properties": "^7.27.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",

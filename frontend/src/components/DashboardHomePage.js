@@ -33,7 +33,7 @@ const DashboardHomePage = () => { // Đổi tên component nếu tên file khác
                     return; // Không fetch nếu không có token (finally sẽ set loading false)
                 }
 
-                const response = await fetch('/quan-ly-tai-khoan/dashboard/summary/', { // URL API summary
+                const response = await fetch('/api/dashboard/summary/', { // URL API summary
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 console.log("DHP fetchSummary: API summary response status:", response.status);
