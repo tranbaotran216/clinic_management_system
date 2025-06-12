@@ -1,7 +1,7 @@
 // frontend/src/RolesPage.js
 import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { AuthContext } from './App';
-import { getPermissionTranslation } from './utils/permissionTranslations'; // ✅ KIỂM TRA LẠI ĐƯỜNG DẪN NÀY!
+import { getPermissionTranslation } from './utils/permissionTranslations';
 import {
     Typography, Table, Button, Modal, Form, Input,
     Space, Popconfirm, message, Tooltip, Row, Col, Checkbox, Spin, Alert, Collapse, Empty, Tag
@@ -11,12 +11,9 @@ import {
 } from '@ant-design/icons';
 
 const { Title } = Typography;
+const { Search } = Input;
 
-// ===================================================================
-// == Component con để hiển thị Form phân quyền trong Modal         ==
-// ===================================================================
-const PermissionAssignmentForm = ({ groupedPermissions, loading, form }) => {
-    // Bảng dịch từ tên model sang tên nhóm chức năng
+const PermissionAssignmentForm = ({ groupedPermissions, loading }) => {
     const modelToGroupTitle = {
         taikhoan: 'Quản trị: Tài khoản & Vai trò',
         group: 'Quản trị: Tài khoản & Vai trò',
@@ -29,19 +26,13 @@ const PermissionAssignmentForm = ({ groupedPermissions, loading, form }) => {
         cachdung: 'Quản lý Dược & Kho',
         donvitinh: 'Quản lý Dược & Kho',
         loaibenh: 'Danh mục chung',
-        // Thêm các model khác nếu cần
     };
     
-    // Dùng useMemo để chỉ tính toán lại khi dữ liệu thay đổi
     const collapseItems = useMemo(() => {
         if (loading || !groupedPermissions) return [];
-        
-        // Gom các quyền lại theo tên nhóm chức năng đã định nghĩa ở trên
         const permissionsByGroupTitle = Object.entries(groupedPermissions).reduce((acc, [modelName, perms]) => {
             const groupTitle = modelToGroupTitle[modelName] || `Chức năng khác: ${modelName}`;
-            if (!acc[groupTitle]) {
-                acc[groupTitle] = [];
-            }
+            if (!acc[groupTitle]) acc[groupTitle] = [];
             acc[groupTitle].push(...perms);
             return acc;
         }, {});
@@ -55,9 +46,7 @@ const PermissionAssignmentForm = ({ groupedPermissions, loading, form }) => {
                 <Row gutter={[8, 16]}>
                     {permsInGroup.map(perm => (
                         <Col xs={24} sm={12} md={8} lg={6} key={perm.id}>
-                            <Checkbox value={perm.id}> {/* Gán quyền bằng ID */}
-                                {getPermissionTranslation(perm.full_codename)}
-                            </Checkbox>
+                            <Checkbox value={perm.id}>{getPermissionTranslation(perm.full_codename)}</Checkbox>
                         </Col>
                     ))}
                 </Row>
@@ -65,13 +54,8 @@ const PermissionAssignmentForm = ({ groupedPermissions, loading, form }) => {
         }));
     }, [groupedPermissions, loading]);
 
-    if (loading) {
-        return <div style={{ textAlign: 'center', padding: '30px' }}><Spin tip="Đang tải danh sách quyền..." /></div>;
-    }
-
-    if (!collapseItems) {
-        return <Empty description="Không tìm thấy quyền nào để gán. Vui lòng kiểm tra lại cấu hình hệ thống." />;
-    }
+    if (loading) return <div style={{ textAlign: 'center', padding: '30px' }}><Spin tip="Đang tải danh sách quyền..." /></div>;
+    if (!collapseItems) return <Empty description="Không tìm thấy quyền nào để gán." />;
 
     return (
         <Form.Item name="permission_ids" noStyle>
@@ -82,9 +66,6 @@ const PermissionAssignmentForm = ({ groupedPermissions, loading, form }) => {
     );
 };
 
-// ===================================================================
-// == Component chính: RolesPage                                    ==
-// ===================================================================
 const RolesPage = () => {
     const { currentUser } = useContext(AuthContext);
     const [roles, setRoles] = useState([]);
@@ -98,26 +79,19 @@ const RolesPage = () => {
     const [permissionForm] = Form.useForm();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [loadingPermissions, setLoadingPermissions] = useState(false);
+    const [searchText, setSearchText] = useState('');
 
-    // Quyền hạn
     const canViewRoles = currentUser?.permissions?.includes('auth.view_group');
     const canAddRole = currentUser?.permissions?.includes('auth.add_group');
     const canChangeRole = currentUser?.permissions?.includes('auth.change_group');
     const canDeleteRole = currentUser?.permissions?.includes('auth.delete_group');
     const canAssignPermissions = canChangeRole;
 
-    // Gom nhóm quyền để truyền vào Modal
     const groupedPermissionsForModal = useMemo(() => {
         const internalApps = ['admin', 'contenttypes', 'sessions'];
-        
-        const filtered = allSystemPermissions.filter(p => 
-            p.full_codename && !internalApps.some(app => p.full_codename.startsWith(app))
-        );
-
+        const filtered = allSystemPermissions.filter(p => p.full_codename && !internalApps.some(app => p.full_codename.startsWith(app)));
         return filtered.reduce((acc, perm) => {
-            const codenamePart = perm.full_codename.split('.')[1] || '';
-            const modelName = codenamePart.split('_').pop();
-
+            const modelName = (perm.full_codename.split('.')[1] || '').split('_').pop();
             if (modelName) {
                 if (!acc[modelName]) acc[modelName] = [];
                 acc[modelName].push(perm);
@@ -125,22 +99,24 @@ const RolesPage = () => {
             return acc;
         }, {});
     }, [allSystemPermissions]);
+    
+    const filteredRoles = useMemo(() => {
+        if (!searchText) return roles;
+        const lowercasedSearchText = searchText.toLowerCase();
+        return roles.filter(role => role.name.toLowerCase().includes(lowercasedSearchText));
+    }, [roles, searchText]);
 
-    // Hàm fetch dữ liệu
     const fetchData = async () => {
         if (!canViewRoles) return;
         setLoadingTable(true);
         try {
             const token = localStorage.getItem('authToken');
             const headers = { 'Authorization': `Bearer ${token}` };
-            const [rolesRes, permsRes] = await Promise.all([
-                fetch('/api/groups/', { headers }),
-                fetch('/api/permissions/', { headers })
-            ]);
-            const rolesData = rolesRes.ok ? await rolesRes.json() : null;
-            const permsData = permsRes.ok ? await permsRes.json() : null;
-            setRoles(rolesData ? (Array.isArray(rolesData) ? rolesData : rolesData.results || []) : []);
-            setAllSystemPermissions(permsData ? (Array.isArray(permsData) ? permsData : permsData.results || []) : []);
+            const [rolesRes, permsRes] = await Promise.all([fetch('/api/groups/', { headers }), fetch('/api/permissions/', { headers })]);
+            const rolesData = rolesRes.ok ? await rolesRes.json() : [];
+            const permsData = permsRes.ok ? await permsRes.json() : [];
+            setRoles(rolesData.results || rolesData);
+            setAllSystemPermissions(permsData.results || permsData);
             if (!rolesRes.ok) message.error(`Tải DS vai trò thất bại (Lỗi ${rolesRes.status})`);
             if (!permsRes.ok) message.error(`Tải DS quyền thất bại (Lỗi ${permsRes.status})`);
         } catch (error) { message.error('Lỗi khi tải dữ liệu: ' + error.message); }
@@ -149,7 +125,6 @@ const RolesPage = () => {
 
     useEffect(() => { if (canViewRoles) fetchData(); }, [canViewRoles]);
     
-    // Xử lý Modal thêm/sửa tên vai trò
     const showRoleModal = (role = null) => {
         setEditingRole(role);
         roleForm.setFieldsValue(role ? { name: role.name } : { name: '' });
@@ -175,10 +150,21 @@ const RolesPage = () => {
         finally { setIsSubmitting(false); }
     };
 
-    // Xử lý Modal phân quyền
+    const handleDeleteRole = async (roleId) => {
+        setIsSubmitting(true);
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(`/api/groups/${roleId}/`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            if (response.status === 204 || response.ok) {
+                message.success('Đã xóa vai trò.');
+                fetchData();
+            } else { message.error('Lỗi khi xóa vai trò. Có thể vai trò này đang được gán cho người dùng.'); }
+        } catch (error) { message.error('Lỗi kết nối khi xóa vai trò.'); }
+        finally { setIsSubmitting(false); }
+    };
+
     const showPermissionModal = (role) => {
         setRoleToAssign(role);
-        // Lấy các ID quyền hiện tại của vai trò để check vào các checkbox
         const currentPermissionIds = role.permissions.map(p => p.id);
         permissionForm.setFieldsValue({ permission_ids: currentPermissionIds });
         setIsPermissionModalVisible(true);
@@ -191,27 +177,20 @@ const RolesPage = () => {
         try {
             const payload = { permission_ids: values.permission_ids || [] };
             const response = await fetch(`/api/groups/${roleToAssign.id}/assign-permissions/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(payload),
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload)
             });
             if (response.ok) {
                 message.success('Cập nhật quyền cho vai trò thành công!');
                 setIsPermissionModalVisible(false);
-                fetchData(); // Tải lại để cập nhật số lượng quyền
-            } else { message.error('Lỗi khi cập nhật quyền cho vai trò.'); }
+                fetchData();
+            } else { message.error('Lỗi khi cập nhật quyền.'); }
         } catch (error) { message.error('Đã xảy ra lỗi khi lưu quyền.'); }
         finally { setIsSubmitting(false); }
-    };
-    
-    // Xử lý xóa vai trò
-    const handleDeleteRole = async (roleId) => {
-        // ... (Giữ nguyên logic xóa của bạn)
     };
 
     const roleColumns = [
         { title: 'Tên Vai trò', dataIndex: 'name', key: 'name', sorter: (a, b) => a.name.localeCompare(b.name) },
-        { title: 'Số quyền', dataIndex: 'permissions', key: 'permissions_count', render: p => <Tag color="blue">{p?.length || 0}</Tag> },
+        { title: 'Số quyền', dataIndex: 'permissions', key: 'permissions_count', align: 'center', sorter: (a, b) => (a.permissions?.length || 0) - (b.permissions?.length || 0), render: p => <Tag color="blue">{p?.length || 0}</Tag> },
         {
             title: 'Hành động', key: 'action', width: 220, align: 'center',
             render: (_, role) => (
@@ -224,24 +203,24 @@ const RolesPage = () => {
         },
     ];
 
-    if (!canViewRoles) {
-        return <Alert message="Bạn không có quyền truy cập chức năng này." type="error" showIcon />;
-    }
+    if (!canViewRoles) return null; // Nếu không có quyền xem, không render gì cả
 
     return (
         <Space direction="vertical" style={{ width: '100%' }} size="large">
             <Row justify="space-between" align="middle">
-                <Col><Title level={4} style={{ margin: 0 }}>Quản lý Vai trò & Phân quyền</Title></Col>
-                <Col>
+                <Col xs={24} md={12}>
+                    <Search placeholder="Tìm theo tên vai trò..." onSearch={value => setSearchText(value)} onChange={e => !e.target.value && setSearchText('')} allowClear enterButton style={{ width: '90%' }} />
+                </Col>
+                <Col xs={24} md={12} style={{ textAlign: 'right', marginTop: '10px' }}>
                     <Space>
                         <Button icon={<ReloadOutlined />} onClick={fetchData} loading={loadingTable}>Tải lại</Button>
                         {canAddRole && <Button type="primary" icon={<PlusOutlined />} onClick={() => showRoleModal()}>Thêm Vai trò</Button>}
                     </Space>
                 </Col>
             </Row>
-            <Table columns={roleColumns} dataSource={roles} loading={loadingTable} rowKey="id" bordered />
+            
+            <Table columns={roleColumns} dataSource={filteredRoles} loading={loadingTable} rowKey="id" bordered />
 
-            {/* Modal Thêm/Sửa Tên Vai Trò */}
             <Modal title={editingRole ? `Sửa tên vai trò` : "Thêm Vai trò mới"} open={isRoleModalVisible} onCancel={() => setIsRoleModalVisible(false)} destroyOnHidden footer={null}>
                 <Form form={roleForm} layout="vertical" onFinish={handleRoleFormSubmit} style={{ marginTop: '24px' }}>
                     <Form.Item name="name" label="Tên Vai trò" rules={[{ required: true }]}><Input placeholder="Ví dụ: Bác sĩ, Lễ tân" /></Form.Item>
@@ -249,7 +228,6 @@ const RolesPage = () => {
                 </Form>
             </Modal>
 
-            {/* Modal Phân Quyền */}
             {roleToAssign && (
                 <Modal title={`Phân quyền cho vai trò: ${roleToAssign.name}`} open={isPermissionModalVisible} onCancel={() => setIsPermissionModalVisible(false)}
                     destroyOnHidden width={900}
@@ -258,7 +236,7 @@ const RolesPage = () => {
                         <Button key="submit" type="primary" loading={isSubmitting} onClick={() => permissionForm.submit()}>Lưu quyền</Button>,
                     ]}>
                     <Form form={permissionForm} onFinish={handlePermissionFormSubmit} layout="vertical" style={{ marginTop: '24px', maxHeight: '60vh', overflowY: 'auto', paddingRight: '16px' }}>
-                        <PermissionAssignmentForm groupedPermissions={groupedPermissionsForModal} loading={loadingPermissions} form={permissionForm} />
+                        <PermissionAssignmentForm groupedPermissions={groupedPermissionsForModal} loading={loadingPermissions} />
                     </Form>
                 </Modal>
             )}
