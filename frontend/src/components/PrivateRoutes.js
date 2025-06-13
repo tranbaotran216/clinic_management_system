@@ -3,7 +3,7 @@ import React, { useContext } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthContext } from './App'; // Hoặc nơi bạn định nghĩa AuthContext
 
-const PrivateRoute = ({ requiredPermission }) => {
+const PrivateRoute = ({ requiredPermissions }) => {
     const { currentUser, loadingAuth } = useContext(AuthContext);
     // const location = useLocation(); // Không cần nếu RequireAuth đã xử lý
 
@@ -17,13 +17,23 @@ const PrivateRoute = ({ requiredPermission }) => {
         return <Navigate to="/login" replace />;
     }
 
-    // currentUser.permissions là mảng các chuỗi permission
-    const hasPermission = currentUser.permissions && currentUser.permissions.includes(requiredPermission);
+    // (Tr) chỗ này cần để xử lý cái regulations -> tại nó có nhìu page con + mỗi page 1 quyền riêng
+    // (Tr) lấy mấy cái quyền đó
+    const userPermissions = currentUser.permissions || [];
+    
+    console.log('currentUser', currentUser);
+    console.log('userPermissions', userPermissions);
+    console.log('requiredPermissions', requiredPermissions);
+
+    const hasPermission =
+        !requiredPermissions || requiredPermissions.length === 0 ||
+        requiredPermissions.some(p => userPermissions.includes(p));
+
 
     if (!hasPermission) {
-        console.warn(`User ${currentUser.ten_dang_nhap || currentUser.username} không có quyền: ${requiredPermission}`);
+        console.warn(`User ${currentUser.ten_dang_nhap || currentUser.username} không có quyền: ${requiredPermissions}`);
         // Chuyển hướng đến trang "unauthorized"
-        return <Navigate to="/unauthorized" state={{ missingPermission: requiredPermission }} replace />;
+        return <Navigate to="/unauthorized" state={{ missingPermission: requiredPermissions }} replace />;
     }
 
     return <Outlet />; // Render component trang con nếu có quyền

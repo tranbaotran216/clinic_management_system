@@ -1,14 +1,16 @@
 from rest_framework import generics, status, views as drf_views, viewsets
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import TaiKhoan
+from .models import TaiKhoan, LoaiBenh, CachDung, DonViTinh
 from .serializers import (
     TaiKhoanCreateSerializer,
     TaiKhoanPublicSerializer,
     TaiKhoanUpdateSerializer,
     GroupSerializer,
     PermissionSerializer,
-    GroupCreateUpdateSerializer
+    GroupCreateUpdateSerializer,
+    CachDungSerializer,
+    LoaiBenhSerializer, DonViTinhSerializer
 )
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -138,4 +140,20 @@ class UserViewSet(viewsets.ModelViewSet):
 class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = DjangoPermission.objects.select_related('content_type').all().order_by('content_type__app_label', 'name')
     serializer_class = PermissionSerializer
+    permission_classes = [IsAuthenticated, isManager]
+
+# (Tr): này để thêm mấy cái cách dùng,... trong dashboard của quản lý
+class LoaiBenhViewSet(viewsets.ModelViewSet):
+    queryset = LoaiBenh.objects.all()
+    serializer_class = LoaiBenhSerializer
+    permission_classes = [IsAuthenticated, isManager]
+
+class DonViTinhViewSet(viewsets.ModelViewSet):
+    queryset = DonViTinh.objects.all()
+    serializer_class = DonViTinhSerializer
+    permission_classes = [IsAuthenticated, isManager]
+
+class CachDungViewSet(viewsets.ModelViewSet):
+    queryset = CachDung.objects.all()
+    serializer_class = CachDungSerializer
     permission_classes = [IsAuthenticated, isManager]

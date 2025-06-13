@@ -6,6 +6,9 @@ from .views import (
     LoginView,
     CurrentUserDetailView,
     DashboardSummaryView,
+    LoaiBenhViewSet,
+    DonViTinhViewSet,
+    CachDungViewSet,
     
     # Các ViewSet
     UserViewSet,
@@ -26,6 +29,10 @@ router.register(r'groups', GroupViewSet, basename='group')
 
 # URL sẽ là /api/permissions/ (ví dụ)
 router.register(r'permissions', PermissionViewSet, basename='permission')
+
+router.register(r'diseases', LoaiBenhViewSet, basename='disease')
+router.register(r'units', DonViTinhViewSet, basename='unit')
+router.register(r'usages', CachDungViewSet, basename='usage')
 
 # --- DANH SÁCH URL CỦA APP ACCOUNTS ---
 urlpatterns = [
@@ -50,4 +57,5 @@ urlpatterns = [
     # /groups/{pk}/permissions/, /groups/{pk}/assign-permissions/
     # /permissions/
     path('', include(router.urls)),
+    path('api/', include(router.urls)),
 ]

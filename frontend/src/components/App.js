@@ -26,6 +26,10 @@ import AccountsPage from "./AccountsPage";
 import AppointmentsPage from "./AppointmentsPage";
 import DashboardHomepage from "./DashboardHomepage";
 import RolesPage from "./RolesPage";
+import RegulationPage from "./RegulationPage";
+import DiseasesPage from "./Regulations/DiseasesPage";
+import UnitsPage from "./Regulations/UnitsPage";
+import UsagesPage from "./Regulations/UsagesPage";
 // ... các component trang khác
 
 // --- AUTH PROVIDER COMPONENT (GIỮ NGUYÊN) ---
@@ -146,60 +150,58 @@ export default function App() {
                         <Route index element={<DashboardHomepage />} />
 
                         {/* --- CÁC ROUTE CON ĐƯỢC BẢO VỆ BỞI PERMISSION CỤ THỂ --- */}
-                        
-                        {/* =================================================================== */}
-                        {/* 1. Quản lý Tài khoản & Vai trò (nhóm chung) */}
-                        {/* PrivateRoute này sẽ kiểm tra quyền xem tài khoản, nếu có quyền này */}
-                        {/* thì mới cho vào các route con bên trong. */}
-                        {/* =================================================================== */}
-                        <Route element={<PrivateRoute requiredPermission="accounts.view_taikhoan" />}>
-                            {/* Route để xem trang quản lý tài khoản */}
+
+                        {/* 1. Quản lý Tài khoản & Vai trò */}
+                        <Route element={<PrivateRoute requiredPermissions={["accounts.view_taikhoan"]} />}>
                             <Route path="accounts" element={<AccountsPage />} />
-                            
-                            {/* Route để xem trang quản lý vai trò. Vẫn nằm trong đây */}
-                            {/* vì nếu user có quyền xem tài khoản, họ cũng nên thấy mục này. */}
-                            {/* Logic hiển thị menu vẫn do DashboardLayout quyết định. */}
                         </Route>
 
                         {/* 2. Quản lý danh sách khám */}
-                        <Route element={<PrivateRoute requiredPermission="accounts.view_dskham" />}>
+                        <Route element={<PrivateRoute requiredPermissions={["accounts.view_dskham"]} />}>
                             <Route path="appointments" element={<AppointmentsPage />} />
                         </Route>
 
                         {/* 3. Quản lý phiếu khám bệnh */}
-                        <Route element={<PrivateRoute requiredPermission="accounts.view_pkb" />}>
+                        <Route element={<PrivateRoute requiredPermissions={["accounts.view_pkb"]} />}>
                             <Route path="medical-records" element={<h2>Trang Quản lý Phiếu khám bệnh</h2>} />
                         </Route>
 
-                        {/* 4. Quản lý Thuốc (các route con) */}
-                        <Route element={<PrivateRoute requiredPermission="accounts.view_thuoc" />}>
+                        {/* 4. Quản lý Thuốc */}
+                        <Route element={<PrivateRoute requiredPermissions={["accounts.view_thuoc"]} />}>
                             <Route path="medications/inventory" element={<h2>Trang Quản lý Kho thuốc</h2>} />
                             <Route path="medications/search" element={<h2>Trang Tra cứu thuốc</h2>} />
                         </Route>
-                        <Route element={<PrivateRoute requiredPermission="accounts.add_chitietpkb" />}>
+                        <Route element={<PrivateRoute requiredPermissions={["accounts.add_chitietpkb"]} />}>
                             <Route path="medications/usage" element={<h2>Trang Kê đơn thuốc</h2>} />
                         </Route>
 
                         {/* 5. Xem hóa đơn */}
-                        <Route element={<PrivateRoute requiredPermission="accounts.view_hoadon" />}>
+                        <Route element={<PrivateRoute requiredPermissions={["accounts.view_hoadon"]} />}>
                             <Route path="billing" element={<h2>Trang Xem hóa đơn</h2>} />
                         </Route>
 
                         {/* 6. Báo cáo & Thống kê */}
-                        <Route element={<PrivateRoute requiredPermission="accounts.view_hoadon" />}>
-                             <Route path="reports" element={<h2>Trang Báo cáo & Thống kê</h2>} />
+                        <Route element={<PrivateRoute requiredPermissions={["accounts.view_hoadon"]} />}>
+                            <Route path="reports" element={<h2>Trang Báo cáo & Thống kê</h2>} />
                         </Route>
 
-                        {/* 7. Quản lý Danh mục (các route con) */}
-                         <Route element={<PrivateRoute requiredPermission="accounts.view_loaibenh" />}>
-                            <Route path="regulations/diseases" element={<h2>Trang Quản lý Loại Bệnh</h2>} />
+                        {/* 7. Quản lý Danh mục */}
+                        <Route 
+                            path="regulations"
+                            element={
+                                <PrivateRoute requiredPermissions={[
+                                    "accounts.view_loaibenh",
+                                    "accounts.view_donvitinh",
+                                    "accounts.view_cachdung"
+                                ]} />
+                            }>
+                            <Route index element={<RegulationPage />} />
+                            <Route path="diseases" element={<DiseasesPage />} />
+                            <Route path="units" element={<UnitsPage />} />
+                            <Route path="usages" element={<UsagesPage />} />
                         </Route>
-                         <Route element={<PrivateRoute requiredPermission="accounts.view_donvitinh" />}>
-                            <Route path="regulations/units" element={<h2>Trang Quản lý Đơn Vị Tính</h2>} />
-                        </Route>
-                         <Route element={<PrivateRoute requiredPermission="accounts.view_cachdung" />}>
-                            <Route path="regulations/usages" element={<h2>Trang Quản lý Cách Dùng</h2>} />
-                        </Route>
+                        
+                            
 
                         {/* Route 404 cho các đường dẫn không khớp BÊN TRONG /dashboard */}
                         <Route path="*" element={<h2>404 - Trang bạn tìm không tồn tại trong khu vực quản lý.</h2>} />
