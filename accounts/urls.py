@@ -1,61 +1,72 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    # Các view xác thực và nghiệp vụ cơ bản
-    RegisterView,
+    # --- Views/ViewSets bạn đã có ---
+   # RegisterView,
     LoginView,
     CurrentUserDetailView,
     DashboardSummaryView,
+    UserViewSet, # Đã đổi tên từ TaiKhoanViewSet trong views.py
+    GroupViewSet,
+    PermissionViewSet,
     LoaiBenhViewSet,
     DonViTinhViewSet,
     CachDungViewSet,
     
-    # Các ViewSet
-    UserViewSet,
-    GroupViewSet, # <<<< THAY THẾ CustomVaiTroViewSet BẰNG GroupViewSet
-    PermissionViewSet
+    # --- ViewSets MỚI cần import ---
+    ThuocViewSet,
+    QuyDinhValueViewSet,
+    BenhNhanViewSet,
+    DSKhamViewSet,
+    PKBViewSet,
+    HoaDonViewSet,
+    
+    # --- APIViews MỚI cho Báo cáo ---
+    MedicationUsageReportView,
+    RevenueReportView
 )
 
 # Tạo một router để tự động tạo các URL cho ViewSets
 router = DefaultRouter()
 
-# Đăng ký các ViewSet vào router
-# URL sẽ là /api/users/ (ví dụ)
+# --- Đăng ký các ViewSet đã có ---
 router.register(r'users', UserViewSet, basename='user') 
-
-# URL sẽ là /api/groups/ (ví dụ)
-# Đây là endpoint để CRUD "Vai trò", giờ sẽ làm việc với Django Group
 router.register(r'groups', GroupViewSet, basename='group') 
-
-# URL sẽ là /api/permissions/ (ví dụ)
 router.register(r'permissions', PermissionViewSet, basename='permission')
 
-router.register(r'diseases', LoaiBenhViewSet, basename='disease')
-router.register(r'units', DonViTinhViewSet, basename='unit')
-router.register(r'usages', CachDungViewSet, basename='usage')
+# --- Đăng ký các ViewSet cho Danh mục (Quản lý Quy định) ---
+router.register(r'loai-benh', LoaiBenhViewSet, basename='loaibenh') # Giữ tên tiếng Việt có dấu hoặc đổi sang không dấu
+router.register(r'don-vi-tinh', DonViTinhViewSet, basename='donvitinh')
+router.register(r'cach-dung', CachDungViewSet, basename='cachdung')
+router.register(r'thuoc', ThuocViewSet, basename='thuoc')
+
+# --- Đăng ký ViewSet cho QuyDinhValue (Quản lý Quy định) ---
+router.register(r'quy-dinh-value', QuyDinhValueViewSet, basename='quydinhvalue')
+
+# --- Đăng ký ViewSets cho Nghiệp vụ Khám Bệnh ---
+router.register(r'benh-nhan', BenhNhanViewSet, basename='benhnhan')
+router.register(r'ds-kham', DSKhamViewSet, basename='dskham') # Danh sách chờ khám
+router.register(r'pkb', PKBViewSet, basename='pkb') # Phiếu khám bệnh
+router.register(r'hoa-don', HoaDonViewSet, basename='hoadon')
+
 
 # --- DANH SÁCH URL CỦA APP ACCOUNTS ---
 urlpatterns = [
     # URLs cho các API đơn lẻ (Class-Based Views không thuộc ViewSet)
-    # URL cuối cùng sẽ là /api/auth/register/ (ví dụ)
-    path('auth/register/', RegisterView.as_view(), name='auth_register'),
-    
-    # URL cuối cùng sẽ là /api/login/
-    path('login/', LoginView.as_view(), name='auth_login'), # Giữ lại nếu bạn có logic đặc biệt, hoặc để SimpleJWT xử lý
-
-    # URL cuối cùng sẽ là /api/auth/me/
+  #  path('auth/register/', RegisterView.as_view(), name='auth_register'),
+    path('login/', LoginView.as_view(), name='auth_login'),
     path('auth/me/', CurrentUserDetailView.as_view(), name='current_user_details'),
-    
-    # URL cuối cùng sẽ là /api/dashboard/summary/
     path('dashboard/summary/', DashboardSummaryView.as_view(), name='dashboard_summary'),
 
+    # URLs cho các API Báo cáo
+    path('reports/medication-usage/', MedicationUsageReportView.as_view(), name='report_medication_usage'),
+    path('reports/revenue/', RevenueReportView.as_view(), name='report_revenue'),
+
     # Bao gồm tất cả các URL được tạo tự động bởi router
-    # Điều này sẽ tạo ra các URL như:
-    # /users/, /users/{pk}/
-    # /users/{pk}/assign-groups/
-    # /groups/, /groups/{pk}/
-    # /groups/{pk}/permissions/, /groups/{pk}/assign-permissions/
-    # /permissions/
-    path('', include(router.urls)),
-    path('api/', include(router.urls)),
+    # Bạn chỉ cần include router một lần.
+    # Nếu file urls.py này được include trong project urls.py với prefix 'api/',
+    # thì các URL của router sẽ tự động có prefix đó.
+    # Ví dụ: /api/users/, /api/groups/
+    path('', include(router.urls)), # Giữ lại dòng này là đủ nếu project urls.py đã có prefix 'api/'
+    # Bỏ dòng path('api/', include(router.urls)), vì nó sẽ tạo ra /api/api/users/ (lặp prefix)
 ]
