@@ -148,46 +148,9 @@ export default function App() {
                         </Route>
 
                         {/* 2. QUẢN LÝ KHÁM BỆNH - CẤU TRÚC ĐÚNG */}
-                        {/* Menu item 'Quản lý khám bệnh' có path là 'medical-records' */}
-                        <Route 
-                            path="medical-records"
-                            element={
-                                <PrivateRoute requiredPermissions={["accounts.view_dskham", "accounts.view_pkb"]}>
-                                    <ExaminationManagementPage /> {/* Component cha chứa Tabs và Outlet */}
-                                </PrivateRoute>
-                            }
-                        >
-                            <Route index element={<Navigate to="waiting-list" replace />} /> 
-                            <Route 
-                                path="waiting-list" 
-                                element={<WaitingListPage />} // Sẽ được render vào Outlet của ExaminationManagementPage
-                            />
-                            <Route 
-                                path="record-list" 
-                                element={<MedicalRecordListPage />} // Sẽ được render vào Outlet của ExaminationManagementPage
-                            />
+                        <Route element={<PrivateRoute requiredPermissions={["accounts.view_dskham", "accounts.view_pkb"]} />}>
+                            <Route path="medical-records/*" element={<ExaminationManagementPage />} />
                         </Route>
-
-                        {/* Các route này nằm ngoài cấu trúc Tabs của ExaminationManagementPage */}
-                        {/* Route để tạo PKB mới */}
-                        <Route 
-                            path="medical-records/new"
-                            element={
-                                <PrivateRoute requiredPermissions={["accounts.add_pkb"]}>
-                                    <MedicalRecordFormPage mode="create" />
-                                </PrivateRoute>
-                            } 
-                        />
-                        {/* Route để sửa PKB */}
-                        <Route 
-                            path="medical-records/:pkbId/edit"
-                            element={
-                                <PrivateRoute requiredPermissions={["accounts.change_pkb"]}>
-                                    <MedicalRecordFormPage mode="edit" />
-                                </PrivateRoute>
-                            } 
-                        />
-                        
                         {/* 3. Tra cứu thuốc */}
                         <Route element={<PrivateRoute requiredPermissions={["accounts.view_thuoc"]} />}>
                             <Route path="medications/search" element={<h2>Trang Tra cứu thuốc</h2>} />

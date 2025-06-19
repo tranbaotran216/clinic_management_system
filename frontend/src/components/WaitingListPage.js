@@ -1,4 +1,4 @@
-// frontend/src/components/WaitingListPage.js (Bản full đã tích hợp Modal PKB)
+// frontend/src/components/WaitingListPage.js (Bản full đã tích hợp logic mới)
 
 import React, { useState, useEffect, useContext, useMemo } from 'react';
 import {
@@ -27,13 +27,16 @@ const getAuthHeaders = () => {
 
 // Component con cho bảng thuốc, giúp code gọn gàng
 const PrescriptionTable = ({ form, medicines, usages }) => {
+    // ✅ SỬA LẠI HÀM NÀY ĐỂ TỰ ĐỘNG ĐIỀN CÁCH DÙNG
     const handleMedicineChange = (medicineId, fieldKey) => {
         const selectedMedicine = medicines.find(m => m.id === medicineId);
         if (selectedMedicine) {
-            const currentFields = form.getFieldValue('chi_tiet_don_thuoc');
+            const currentFields = form.getFieldValue('chi_tiet_don_thuoc') || [];
+            // Cập nhật cả Đơn vị tính và Cách dùng mặc định
             currentFields[fieldKey] = {
                 ...currentFields[fieldKey],
-                don_vi_tinh: selectedMedicine.don_vi_tinh.ten_don_vi_tinh,
+                don_vi_tinh: selectedMedicine.don_vi_tinh?.ten_don_vi_tinh,
+                cach_dung_chi_dinh_id: selectedMedicine.cach_dung_mac_dinh?.id,
             };
             form.setFieldsValue({ chi_tiet_don_thuoc: currentFields });
         }
@@ -44,36 +47,27 @@ const PrescriptionTable = ({ form, medicines, usages }) => {
             {(fields, { add, remove }) => (
                 <>
                     <Table
-                        dataSource={fields}
-                        pagination={false}
-                        rowKey="key"
-                        size="small"
-                        bordered
+                        dataSource={fields} pagination={false} rowKey="key" size="small" bordered
                         columns={[
-                            { title: 'STT', render: (text, record, index) => index + 1, width: 50 },
-                            {
-                                title: 'Thuốc (*)',
-                                render: (text, record) => (
-                                    <Form.Item name={[record.name, 'thuoc_id']} rules={[{ required: true, message: '!' }]} noStyle>
-                                        <Select placeholder="Chọn thuốc" style={{ width: '100%' }} onChange={(value) => handleMedicineChange(value, record.key)}>
-                                            {medicines.map(m => <Option key={m.id} value={m.id}>{m.ten_thuoc}</Option>)}
-                                        </Select>
-                                    </Form.Item>
-                                )
-                            },
-                            { title: 'Đơn vị', width: 100, render: (text, record) => <Form.Item name={[record.name, 'don_vi_tinh']} noStyle><Input disabled /></Form.Item> },
-                            { title: 'Số lượng (*)', width: 100, render: (text, record) => <Form.Item name={[record.name, 'so_luong_ke']} rules={[{ required: true, message: '!' }]} noStyle><InputNumber min={1} style={{ width: '100%' }} /></Form.Item> },
-                            {
-                                title: 'Cách dùng',
-                                render: (text, record) => (
-                                    <Form.Item name={[record.name, 'cach_dung_chi_dinh_id']} noStyle>
-                                        <Select placeholder="Cách dùng" style={{ width: '100%' }} allowClear>
-                                            {usages.map(u => <Option key={u.id} value={u.id}>{u.ten_cach_dung}</Option>)}
-                                        </Select>
-                                    </Form.Item>
-                                )
-                            },
-                            { title: '', width: 50, align: 'center', render: (text, record) => <Button danger icon={<DeleteOutlined />} onClick={() => remove(record.name)} /> }
+                            { title: 'STT', render: (t, r, i) => i + 1, width: 50 },
+                            { title: 'Thuốc (*)', render: (t, r) => (
+                                <Form.Item name={[r.name, 'thuoc_id']} rules={[{ required: true, message: '!' }]} noStyle>
+                                    <Select showSearch placeholder="Chọn thuốc" style={{ width: '100%' }} onChange={(val) => handleMedicineChange(val, r.key)}
+                                        optionFilterProp="children" filterOption={(input, option) => (option?.children ?? '').toLowerCase().includes(input.toLowerCase())} >
+                                        {medicines.map(m => <Option key={m.id} value={m.id}>{m.ten_thuoc}</Option>)}
+                                    </Select>
+                                </Form.Item>
+                            )},
+                            { title: 'Đơn vị', width: 100, render: (t, r) => <Form.Item name={[r.name, 'don_vi_tinh']} noStyle><Input disabled /></Form.Item> },
+                            { title: 'Số lượng (*)', width: 100, render: (t, r) => <Form.Item name={[r.name, 'so_luong_ke']} rules={[{ required: true, message: '!' }]} noStyle><InputNumber min={1} style={{ width: '100%' }} /></Form.Item> },
+                            { title: 'Cách dùng', render: (t, r) => (
+                                <Form.Item name={[r.name, 'cach_dung_chi_dinh_id']} noStyle>
+                                    <Select placeholder="Cách dùng" style={{ width: '100%' }} allowClear>
+                                        {usages.map(u => <Option key={u.id} value={u.id}>{u.ten_cach_dung}</Option>)}
+                                    </Select>
+                                </Form.Item>
+                            )},
+                            { title: '', width: 50, align: 'center', render: (t, r) => <Button danger icon={<DeleteOutlined />} onClick={() => remove(r.name)} /> }
                         ]}
                     />
                     <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />} style={{ marginTop: 12 }}>Thêm thuốc</Button>
@@ -83,29 +77,40 @@ const PrescriptionTable = ({ form, medicines, usages }) => {
     );
 };
 
+
 const WaitingListPage = () => {
+    // --- STATE & CONTEXT ---
     const { currentUser } = useContext(AuthContext);
     const [waitingList, setWaitingList] = useState([]);
     const [loading, setLoading] = useState(false);
+    
+    // State cho Modal 1: Thêm/Sửa lượt đăng ký
     const [isRegisterModalVisible, setIsRegisterModalVisible] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
     const [registerForm] = Form.useForm();
+    
+    // State cho Modal 2: Tạo Phiếu Khám Bệnh
     const [isPKBModalVisible, setIsPKBModalVisible] = useState(false);
     const [currentPatientForPKB, setCurrentPatientForPKB] = useState(null);
     const [pkbForm] = Form.useForm();
     const [isSubmittingPKB, setIsSubmittingPKB] = useState(false);
+    
+    // State cho dữ liệu phụ (danh mục)
     const [diseases, setDiseases] = useState([]);
     const [medicines, setMedicines] = useState([]);
     const [usages, setUsages] = useState([]);
+
     const [searchText, setSearchText] = useState('');
     const [selectedDate, setSelectedDate] = useState(dayjs());
     const navigate = useNavigate();
 
+    // --- PERMISSIONS ---
     const canAdd = currentUser?.permissions?.includes('accounts.add_dskham');
     const canChange = currentUser?.permissions?.includes('accounts.change_dskham');
     const canDelete = currentUser?.permissions?.includes('accounts.delete_dskham');
     const canCreatePKB = currentUser?.permissions?.includes('accounts.add_pkb');
 
+    // --- DATA FETCHING ---
     const fetchData = async (dateToFetch) => {
         if (!dateToFetch) return;
         setLoading(true);
@@ -119,7 +124,7 @@ const WaitingListPage = () => {
         } catch (error) { message.error(error.message); }
         finally { setLoading(false); }
     };
-
+    
     const fetchDropdownData = async () => {
         if (diseases.length > 0) return;
         try {
@@ -134,23 +139,19 @@ const WaitingListPage = () => {
             setUsages(await usaRes.json());
         } catch (error) { message.error("Lỗi tải dữ liệu cho form phiếu khám."); }
     };
-
+    
     useEffect(() => { fetchData(selectedDate); }, [selectedDate]);
 
+    // --- LOGIC ---
     const filteredWaitingList = useMemo(() => {
         if (!searchText) return waitingList;
-        const lowercasedSearchText = searchText.toLowerCase();
-        return waitingList.filter(item =>
-            item.benh_nhan && (
-                item.benh_nhan.ho_ten?.toLowerCase().includes(lowercasedSearchText)
-            )
-        );
+        return waitingList.filter(item => item.benh_nhan?.ho_ten?.toLowerCase().includes(searchText.toLowerCase()));
     }, [waitingList, searchText]);
 
     const showRegisterModal = (item = null) => {
         setEditingItem(item);
         if (item) {
-            form.setFieldsValue({
+            registerForm.setFieldsValue({
                 ngay_kham: dayjs(item.ngay_kham, 'YYYY-MM-DD'),
                 ho_ten: item.benh_nhan.ho_ten,
                 gioi_tinh: item.benh_nhan.gioi_tinh,
@@ -182,7 +183,7 @@ const WaitingListPage = () => {
             message.success(`Đã ${editingItem ? 'cập nhật' : 'thêm'} thành công!`);
             setIsRegisterModalVisible(false);
             fetchData(selectedDate);
-        } catch (errorInfo) { console.log('Lỗi:', errorInfo); }
+        } catch (error) { console.log('Lỗi:', error); }
     };
 
     const handleRegisterCancel = () => { setIsRegisterModalVisible(false); };
@@ -202,9 +203,7 @@ const WaitingListPage = () => {
         pkbForm.setFieldsValue({
             ho_ten: record.benh_nhan.ho_ten,
             ngay_kham: dayjs(record.ngay_kham, 'YYYY-MM-DD'),
-            trieu_chung: '',
-            loai_benh_chuan_doan_id: null,
-            chi_tiet_don_thuoc: []
+            trieu_chung: '', loai_benh_chuan_doan_id: null, chi_tiet_don_thuoc: []
         });
         setIsPKBModalVisible(true);
     };
@@ -243,7 +242,7 @@ const WaitingListPage = () => {
     const columns = [
         { title: 'STT', key: 'stt', render: (_, __, index) => index + 1, width: 60, align: 'center' },
         { title: 'Họ Tên', dataIndex: ['benh_nhan', 'ho_ten'], sorter: (a, b) => a.benh_nhan.ho_ten.localeCompare(b.benh_nhan.ho_ten) },
-        { title: 'Giới tính', dataIndex: 'gioi_tinh_display', align: 'center', filters: [{ text: 'Nam', value: 'Nam' }, { text: 'Nữ', value: 'Nữ' }], onFilter: (value, record) => record.gioi_tinh_display === value },
+        { title: 'Giới tính', dataIndex: 'gioi_tinh_display', align: 'center', },
         { title: 'Năm Sinh', dataIndex: ['benh_nhan', 'nam_sinh'], align: 'center', sorter: (a, b) => a.benh_nhan.nam_sinh - b.benh_nhan.nam_sinh },
         { title: 'Địa chỉ', dataIndex: ['benh_nhan', 'dia_chi'] },
         {
@@ -265,14 +264,14 @@ const WaitingListPage = () => {
             <Card style={{ marginBottom: 16 }}>
                 <Row gutter={[16, 16]} justify="space-between" align="middle">
                     <Col xs={24} sm={12} md={6}><DatePicker value={selectedDate} onChange={handleDateChange} format="DD/MM/YYYY" style={{ width: '100%' }} allowClear={false}/></Col>
-                    <Col xs={24} sm={12} md={10}><Search placeholder="Tìm theo tên bệnh nhân..." onSearch={value => setSearchText(value)} onChange={e => { if (!e.target.value) setSearchText(''); }} allowClear enterButton /></Col>
-                    <Col xs={24} md={8} style={{ textAlign: 'right' }}><Space><Button icon={<ReloadOutlined />} onClick={() => fetchData(selectedDate)} loading={loading}>Tải lại</Button>{canAdd && <Button type="primary" icon={<PlusOutlined />} onClick={() => showRegisterModal()}>Thêm bệnh nhân</Button>}</Space></Col>
+                    <Col xs={24} sm={12} md={10}><Search placeholder="Tìm theo tên bệnh nhân..." onSearch={setSearchText} onChange={e => !e.target.value && setSearchText('')} allowClear enterButton /></Col>
+                    <Col xs={24} md={8} style={{ textAlign: 'right' }}><Space><Button icon={<ReloadOutlined />} onClick={() => fetchData(selectedDate)} loading={loading} />{canAdd && <Button type="primary" icon={<PlusOutlined />} onClick={() => showRegisterModal()}>Thêm bệnh nhân</Button>}</Space></Col>
                 </Row>
             </Card>
 
             <Table columns={columns} dataSource={filteredWaitingList} loading={loading} rowKey="id" bordered scroll={{ x: 'max-content' }}/>
 
-            <Modal title={editingItem ? "Sửa thông tin đăng ký khám" : "Thêm bệnh nhân vào danh sách chờ"} open={isRegisterModalVisible} onOk={handleRegisterOk} onCancel={handleRegisterCancel} destroyOnClose okText={editingItem ? "Lưu" : "Thêm"} cancelText="Hủy" width={720}>
+            <Modal title={editingItem ? "Sửa thông tin đăng ký" : "Thêm vào danh sách chờ"} open={isRegisterModalVisible} onOk={handleRegisterOk} onCancel={handleRegisterCancel} destroyOnClose okText={editingItem ? "Lưu" : "Thêm"} cancelText="Hủy" width={720}>
                 <Form form={registerForm} layout="vertical" style={{ marginTop: 24 }} onFinish={handleRegisterOk}>
                      <Row gutter={24}>
                         <Col span={12}><Form.Item name="ho_ten" label="Họ và tên:" rules={[{ required: true }]}><Input placeholder="Họ và tên" /></Form.Item></Col>
@@ -296,8 +295,8 @@ const WaitingListPage = () => {
                             <Col span={12}><Form.Item name="ngay_kham" label="Ngày khám:"><DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" disabled /></Form.Item></Col>
                         </Row>
                         <Row gutter={24}>
-                            <Col span={12}><Form.Item name="trieu_chung" label="Triệu chứng (*):" rules={[{ required: true, message: 'Vui lòng nhập triệu chứng' }]}><Input.TextArea rows={1} placeholder="Nhập triệu chứng" /></Form.Item></Col>
-                            <Col span={12}><Form.Item name="loai_benh_chuan_doan_id" label="Dự đoán loại bệnh (*):" rules={[{ required: true, message: 'Vui lòng chọn bệnh' }]}><Select placeholder="Chọn loại bệnh">{diseases.map(d => <Option key={d.id} value={d.id}>{d.ten_loai_benh}</Option>)}</Select></Form.Item></Col>
+                            <Col span={12}><Form.Item name="trieu_chung" label="Triệu chứng (*):" rules={[{ required: true }]}><Input.TextArea rows={1} placeholder="Nhập triệu chứng" /></Form.Item></Col>
+                            <Col span={12}><Form.Item name="loai_benh_chuan_doan_id" label="Dự đoán loại bệnh (*):" rules={[{ required: true }]}><Select placeholder="Chọn loại bệnh">{diseases.map(d => <Option key={d.id} value={d.id}>{d.ten_loai_benh}</Option>)}</Select></Form.Item></Col>
                         </Row>
                         <Title level={5} style={{ marginTop: 16, marginBottom: 16 }}>Đơn thuốc</Title>
                         <PrescriptionTable form={pkbForm} medicines={medicines} usages={usages} />

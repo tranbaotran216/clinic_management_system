@@ -136,11 +136,12 @@ class QuyDinhValue(models.Model):
 # --- HÀM HELPER ĐỂ LẤY TIỀN KHÁM ---
 def get_tien_kham_co_ban(default_value=30000):
     try:
-        qd_tien_kham = QuyDinhValue.objects.get(ma_quy_dinh=LoaiQuyDinhValue.TIEN_KHAM_CO_BAN)
-        tien_kham = qd_tien_kham.get_value_as_decimal()
-        return tien_kham if tien_kham is not None else Decimal(default_value)
+        tien_kham = QuyDinhValue.objects.values_list('gia_tri', flat=True).get(
+            ma_quy_dinh=LoaiQuyDinhValue.TIEN_KHAM_CO_BAN
+        )
+        return tien_kham
     except QuyDinhValue.DoesNotExist:
-        return Decimal(default_value)
+        return default_value
 
 def get_so_benh_nhan_toi_da(default_value=40):
     try:

@@ -164,7 +164,8 @@ class PKBViewSet(viewsets.ModelViewSet):
         ds_kham_id = self.request.data.get('ds_kham_id')
         ds_kham_instance = DSKham.objects.filter(id=ds_kham_id).first()
         
-        pkb_instance = serializer.save()
+        pkb_instance = serializer.save(ds_kham=ds_kham_instance)
+        
         pkb_instance.tao_hoac_cap_nhat_hoa_don()
 
     def perform_update(self, serializer):
