@@ -1,5 +1,3 @@
-// frontend/src/components/Regulations/UsagesPage.js (PHIÊN BẢN HOÀN CHỈNH)
-
 import React, { useState, useEffect, useContext, useMemo } from 'react';
 import {
     Table, Button, Modal, Form, Input, Space, Popconfirm, message, Typography, Tooltip, Row, Col, Card
@@ -37,7 +35,7 @@ const UsagesPage = () => {
         setLoading(true);
         try {
             const headers = getAuthHeaders();
-            // ✅ SỬA LẠI ENDPOINT API CHO ĐÚNG
+            
             const response = await fetch('/api/cach-dung/', { headers });
             
             if (response.ok) {
@@ -82,7 +80,7 @@ const UsagesPage = () => {
         try {
             const values = await form.validateFields();
             const method = editingUsage ? 'PUT' : 'POST';
-             // ✅ SỬA LẠI ENDPOINT API CHO ĐÚNG
+            
             const url = editingUsage ? `/api/cach-dung/${editingUsage.id}/` : '/api/cach-dung/';
             
             const response = await fetch(url, {
@@ -106,7 +104,7 @@ const UsagesPage = () => {
 
     const handleDelete = async (id) => {
         try {
-            // ✅ SỬA LẠI ENDPOINT API CHO ĐÚNG
+            
             const response = await fetch(`/api/cach-dung/${id}/`, {
                 method: 'DELETE',
                 headers: getAuthHeaders()

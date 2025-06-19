@@ -34,7 +34,7 @@ const UnitsPage = () => {
         setLoading(true);
         try {
             const headers = getAuthHeaders();
-            // ✅ SỬA LẠI ENDPOINT API CHO ĐÚNG
+            
             const response = await fetch('/api/don-vi-tinh/', { headers });
 
             if (response.ok) {
@@ -78,7 +78,7 @@ const UnitsPage = () => {
         try {
             const values = await form.validateFields();
             const method = editingUnit ? 'PUT' : 'POST';
-            // ✅ SỬA LẠI ENDPOINT API CHO ĐÚNG
+            
             const url = editingUnit ? `/api/don-vi-tinh/${editingUnit.id}/` : '/api/don-vi-tinh/';
             
             const response = await fetch(url, {
@@ -102,7 +102,7 @@ const UnitsPage = () => {
 
     const handleDelete = async (id) => {
         try {
-            // ✅ SỬA LẠI ENDPOINT API CHO ĐÚNG
+            
             const response = await fetch(`/api/don-vi-tinh/${id}/`, {
                 method: 'DELETE',
                 headers: getAuthHeaders()

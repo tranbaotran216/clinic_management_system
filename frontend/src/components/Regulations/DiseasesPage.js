@@ -34,7 +34,6 @@ const DiseasesPage = () => {
         setLoading(true);
         try {
             const headers = getAuthHeaders();
-            // ✅ SỬA LẠI ENDPOINT API CHO ĐÚNG
             const response = await fetch('/api/loai-benh/', { headers });
 
             if (response.ok) {
@@ -78,7 +77,7 @@ const DiseasesPage = () => {
         try {
             const values = await form.validateFields();
             const method = editingDisease ? 'PUT' : 'POST';
-             // ✅ SỬA LẠI ENDPOINT API CHO ĐÚNG
+
             const url = editingDisease ? `/api/loai-benh/${editingDisease.id}/` : '/api/loai-benh/';
             
             const response = await fetch(url, {
@@ -102,7 +101,7 @@ const DiseasesPage = () => {
 
     const handleDelete = async (id) => {
         try {
-            // ✅ SỬA LẠI ENDPOINT API CHO ĐÚNG
+    
             const response = await fetch(`/api/loai-benh/${id}/`, {
                 method: 'DELETE',
                 headers: getAuthHeaders()

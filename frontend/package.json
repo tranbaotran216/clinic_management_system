@@ -33,6 +33,7 @@
     "antd": "^5.26.0",
     "axios": "^1.9.0",
     "react-router-dom": "^7.6.2",
-    "react-to-print": "^3.1.0"
+    "react-to-print": "^3.1.0",
+    "recharts": "^2.15.3"
   }
 }
