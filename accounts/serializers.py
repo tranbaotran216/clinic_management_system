@@ -5,7 +5,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.models import Group as DjangoGroup, Permission as DjangoPermission
 from .models import (
     TaiKhoan, BenhNhan, DSKham, PKB, ChiTietPKB,
-    LoaiBenh, Thuoc, DonViTinh, HoaDon, CachDung, QuyDinhValue
+    LoaiBenh, Thuoc, DonViTinh, HoaDon, CachDung, QuyDinhValue, get_so_benh_nhan_toi_da
 )
 
 # ===================================================================
@@ -105,6 +105,12 @@ class ThuocSerializer(serializers.ModelSerializer):
 class QuyDinhValueSerializer(serializers.ModelSerializer):
     ma_quy_dinh_display = serializers.CharField(source='get_ma_quy_dinh_display', read_only=True)
     class Meta: model = QuyDinhValue; fields = ['ma_quy_dinh', 'ma_quy_dinh_display', 'gia_tri']
+    
+class QuyDinhValueUpdateSerializer(serializers.ModelSerializer):
+    """Serializer này chỉ dùng để cập nhật giá trị của một quy định."""
+    class Meta:
+        model = QuyDinhValue
+        fields = ['gia_tri']
 
 # ===================================================================
 # == SERIALIZERS CHO NGHIỆP VỤ KHÁM BỆNH (PHẦN QUAN TRỌNG NHẤT)
@@ -122,13 +128,19 @@ class BenhNhanSerializer(serializers.ModelSerializer):
 class DSKhamSerializer(serializers.ModelSerializer):
     benh_nhan = BenhNhanSerializer(read_only=True)
     gioi_tinh_display = serializers.CharField(source='benh_nhan.get_gioi_tinh_display', read_only=True) # Để hiển thị "Nam", "Nữ"
+    da_kham = serializers.SerializerMethodField()
+    
     class Meta: 
         model = DSKham
-        fields = ['id', 'ngay_kham', 'benh_nhan', 'gioi_tinh_display']
+        fields = ['id', 'ngay_kham', 'benh_nhan', 'gioi_tinh_display', 'da_kham']
 
+    def get_da_kham(self, obj: DSKham) -> bool: 
+        return hasattr(obj, 'phieu_kham') and obj.phieu_kham is not None
+    
 # Dùng để TẠO MỚI một lượt đăng ký
 class DSKhamCreateSerializer(serializers.ModelSerializer):
     benh_nhan = BenhNhanSerializer(write_only=True) 
+ 
     class Meta:
         model = DSKham
         fields = ['ngay_kham', 'benh_nhan']
@@ -143,7 +155,16 @@ class DSKhamCreateSerializer(serializers.ModelSerializer):
         )
         ds_kham_instance = DSKham.objects.create(benh_nhan=benh_nhan_instance, **validated_data)
         return ds_kham_instance
+    
+    def validate(self, data):
+        ngay_kham = data.get('ngay_kham')
+        max_patients = get_so_benh_nhan_toi_da() # <-- Gọi hàm helper, code gọn hơn
+        current_patients = DSKham.objects.filter(ngay_kham=ngay_kham).count()
 
+        if current_patients >= max_patients:
+            raise serializers.ValidationError(...)
+            
+        return data
 # Dùng để CẬP NHẬT (SỬA) một lượt đăng ký
 class DSKhamUpdateSerializer(serializers.ModelSerializer):
     benh_nhan = BenhNhanSerializer() # Nhận object bệnh nhân để cập nhật

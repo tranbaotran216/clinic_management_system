@@ -101,26 +101,27 @@ class LoaiQuyDinhValue(models.TextChoices):
     SO_BENH_NHAN_TOI_DA = 'MAX_PATIENTS_PER_DAY', _('Số bệnh nhân tối đa mỗi ngày')
     TIEN_KHAM_CO_BAN = 'BASE_EXAMINATION_FEE', _('Tiền khám cơ bản')
 
+# Model để lưu giá trị của các quy định
 class QuyDinhValue(models.Model):
     ma_quy_dinh = models.CharField(
-        _('mã quy định'), max_length=50, choices=LoaiQuyDinhValue.choices,
-        unique=True, primary_key=True
+        _('mã quy định'),
+        max_length=50,
+        choices=LoaiQuyDinhValue.choices,
+        unique=True,
+        primary_key=True
     )
-    gia_tri = models.CharField(_('giá trị'), max_length=255, help_text=_("Giá trị của quy định."))
-    ngay_cap_nhat = models.DateTimeField(_('ngày cập nhật'), auto_now=True)
-    nguoi_cap_nhat = models.ForeignKey(
-        TaiKhoan, verbose_name=_('người cập nhật'), on_delete=models.SET_NULL,
-        null=True, blank=True, related_name='quy_dinh_value_cap_nhat'
+    gia_tri = models.PositiveIntegerField(
+        _('giá trị'),
+        help_text=_("Giá trị số của quy định.")
     )
-    class Meta: verbose_name = _("Giá Trị Quy Định"); verbose_name_plural = _("Các Giá Trị Quy Định"); ordering = ['ma_quy_dinh']
-    def __str__(self): return self.get_ma_quy_dinh_display()
-    def get_value_as_int(self, default_if_error=0): # Sửa default_if_error
-        try: return int(self.gia_tri)
-        except (ValueError, TypeError): return default_if_error
-    def get_value_as_decimal(self, default_if_error=Decimal('0')): # Sửa default_if_error
-        try: return Decimal(self.gia_tri)
-        except (ValueError, TypeError, InvalidOperation): return default_if_error
 
+    class Meta:
+        verbose_name = _("Giá Trị Quy Định")
+        verbose_name_plural = _("Các Giá Trị Quy Định")
+        ordering = ['ma_quy_dinh']
+
+    def __str__(self):
+        return self.get_ma_quy_dinh_display()
 
 # --- HÀM HELPER ĐỂ LẤY TIỀN KHÁM ---
 def get_tien_kham_co_ban(default_value=30000):
@@ -130,6 +131,15 @@ def get_tien_kham_co_ban(default_value=30000):
         return tien_kham if tien_kham is not None else Decimal(default_value)
     except QuyDinhValue.DoesNotExist:
         return Decimal(default_value)
+
+def get_so_benh_nhan_toi_da(default_value=40):
+    try:
+        so_benh_nhan = QuyDinhValue.objects.values_list('gia_tri', flat=True).get(
+            ma_quy_dinh=LoaiQuyDinhValue.SO_BENH_NHAN_TOI_DA
+        )
+        return so_benh_nhan
+    except QuyDinhValue.DoesNotExist:
+        return default_value
 
 # --- CÁC MODEL NGHIỆP VỤ KHÁM BỆNH ---
 class BenhNhan(models.Model):
@@ -156,7 +166,7 @@ class PKB(models.Model):
     trieu_chung = models.TextField(_('triệu chứng'), blank=True, default='')
     benh_nhan = models.ForeignKey(BenhNhan, verbose_name=_('bệnh nhân'), on_delete=models.PROTECT, related_name='phieu_kham_benh')
     loai_benh_chuan_doan = models.ForeignKey(LoaiBenh, verbose_name=_('loại bệnh chẩn đoán'), on_delete=models.SET_NULL, null=True, blank=True, related_name='pkb_theo_loai_benh')
-    # bac_si_kham = models.ForeignKey(TaiKhoan, verbose_name=_('bác sĩ khám'), on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'groups__name': 'Bác sĩ'})
+    ds_kham = models.OneToOneField(DSKham, on_delete=models.SET_NULL, null=True, blank=True, related_name='phieu_kham')
     
     class Meta: verbose_name = _("Phiếu Khám Bệnh"); verbose_name_plural = _("Các Phiếu Khám Bệnh"); ordering = ['-ngay_kham', '-id']
     def __str__(self): return f"PKB {self.id} - {self.benh_nhan.ho_ten} - {self.ngay_kham}"

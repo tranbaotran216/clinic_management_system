@@ -26,7 +26,7 @@ from .serializers import (
     PKBSerializer, PKBCreateUpdateSerializer, HoaDonSerializer,
     # Serializers cho Danh mục
     LoaiBenhSerializer, ThuocSerializer, DonViTinhSerializer, CachDungSerializer,
-    QuyDinhValueSerializer,
+    QuyDinhValueSerializer, QuyDinhValueUpdateSerializer,
     # Serializers cho Báo cáo
     BaoCaoSuDungThuocSerializer, BaoCaoDoanhThuNgaySerializer
 )
@@ -161,6 +161,9 @@ class PKBViewSet(viewsets.ModelViewSet):
         return PKBSerializer
     
     def perform_create(self, serializer):
+        ds_kham_id = self.request.data.get('ds_kham_id')
+        ds_kham_instance = DSKham.objects.filter(id=ds_kham_id).first()
+        
         pkb_instance = serializer.save()
         pkb_instance.tao_hoac_cap_nhat_hoa_don()
 
@@ -199,12 +202,14 @@ class ThuocViewSet(viewsets.ModelViewSet):
 
 class QuyDinhValueViewSet(viewsets.ModelViewSet):
     queryset = QuyDinhValue.objects.all()
-    serializer_class = QuyDinhValueSerializer
     permission_classes = [IsAuthenticated, DjangoModelPermissions]
-    http_method_names = ['get', 'put', 'patch', 'head', 'options'] # Chỉ cho phép xem và sửa
-    
-    def perform_update(self, serializer):
-        serializer.save(nguoi_cap_nhat=self.request.user)
+    lookup_field = 'ma_quy_dinh'
+    http_method_names = ['get', 'put', 'patch', 'head', 'options']
+
+    def get_serializer_class(self):
+        if self.action in ['update', 'partial_update']:
+            return QuyDinhValueUpdateSerializer
+        return QuyDinhValueSerializer
 
 class MedicationUsageReportView(drf_views.APIView):
     permission_classes = [IsAuthenticated, isManager] # Hoặc custom permission 'accounts.view_medication_report'

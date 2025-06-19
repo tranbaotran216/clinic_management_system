@@ -4,15 +4,11 @@ from django.contrib.auth.models import Group as DjangoGroup
 
 from .models import (
     TaiKhoan, 
-    # VaiTro, # Không cần nữa vì đã chuyển sang Django Group
     BenhNhan, DSKham, PKB, ChiTietPKB, 
-    LoaiBenh, Thuoc, DonViTinh, HoaDon, CachDung
+    LoaiBenh, Thuoc, DonViTinh, HoaDon, CachDung, QuyDinhValue
 )
 from .forms import TaiKhoanChangeForm, TaiKhoanCreationForm # Sẽ tạo các form này để Admin đẹp hơn
 
-# Unregister model Group mặc định để đăng ký lại với filter_horizontal
-# Điều này giúp giao diện chọn quyền cho Group đẹp hơn (giống hình bạn gửi)
-# Nếu bạn không unregister, bạn sẽ thấy 2 mục "Groups" trong admin
 try:
     admin.site.unregister(DjangoGroup)
 except admin.sites.NotRegistered:
@@ -102,3 +98,15 @@ class ChiTietPKBAdmin(admin.ModelAdmin):
 class HoaDonAdmin(admin.ModelAdmin):
     list_display = ('id', 'phieu_kham_benh', 'ngay_thanh_toan', 'tien_kham', 'tien_thuoc', 'tong_tien')
     list_filter = ('ngay_thanh_toan',)
+    
+@admin.register(QuyDinhValue)
+class QuyDinhValueAdmin(admin.ModelAdmin):
+    list_display = ('ma_quy_dinh', 'get_ma_quy_dinh_display', 'gia_tri')  # Cột hiển thị
+    list_editable = ('gia_tri',)  # Cho phép chỉnh sửa trực tiếp
+    list_filter = ('ma_quy_dinh',)  # Bộ lọc bên phải
+    search_fields = ('ma_quy_dinh',)  # Thanh tìm kiếm
+    ordering = ('ma_quy_dinh',)
+
+    def get_ma_quy_dinh_display(self, obj):
+        return obj.get_ma_quy_dinh_display()
+    get_ma_quy_dinh_display.short_description = 'Tên Quy Định'
