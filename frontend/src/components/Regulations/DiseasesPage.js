@@ -1,9 +1,18 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Table, Button, Modal, Form, Input, Space, Popconfirm, message, Typography } from 'antd';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
+import {
+    Table, Button, Modal, Form, Input, Space, Popconfirm, message, Typography, Tooltip, Row, Col, Card
+} from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import { AuthContext } from '../App';
+import { useNavigate } from 'react-router-dom';
 
 const { Title } = Typography;
+const { Search } = Input;
+
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('authToken');
+    return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+};
 
 const DiseasesPage = () => {
     const { currentUser } = useContext(AuthContext);
@@ -12,22 +21,30 @@ const DiseasesPage = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingDisease, setEditingDisease] = useState(null);
     const [form] = Form.useForm();
+    const [searchText, setSearchText] = useState('');
+    const navigate = useNavigate();
 
+    // Permissions
     const canAdd = currentUser?.permissions?.includes('accounts.add_loaibenh');
     const canChange = currentUser?.permissions?.includes('accounts.change_loaibenh');
     const canDelete = currentUser?.permissions?.includes('accounts.delete_loaibenh');
 
+    // Fetch data
     const fetchDiseases = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('authToken');
-            const res = await fetch('/api/diseases/', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            setDiseases(data.results || data);
+            const headers = getAuthHeaders();
+            // ✅ SỬA LẠI ENDPOINT API CHO ĐÚNG
+            const response = await fetch('/api/loai-benh/', { headers });
+
+            if (response.ok) {
+                const data = await response.json();
+                setDiseases(Array.isArray(data) ? data : (data.results || []));
+            } else {
+                message.error(`Lỗi khi tải loại bệnh (mã ${response.status})`);
+            }
         } catch (error) {
-            message.error('Lỗi khi tải loại bệnh');
+            message.error('Lỗi kết nối khi tải dữ liệu.');
         } finally {
             setLoading(false);
         }
@@ -36,7 +53,17 @@ const DiseasesPage = () => {
     useEffect(() => {
         fetchDiseases();
     }, []);
+    
+    // Filter logic
+    const filteredDiseases = useMemo(() => {
+        if (!searchText) return diseases;
+        return diseases.filter(disease =>
+            disease.ten_loai_benh.toLowerCase().includes(searchText.toLowerCase())
+        );
+    }, [diseases, searchText]);
 
+
+    // Modal and Form Handlers
     const showModal = (record = null) => {
         setEditingDisease(record);
         if (record) {
@@ -50,117 +77,109 @@ const DiseasesPage = () => {
     const handleOk = async () => {
         try {
             const values = await form.validateFields();
-            console.log('Form values:', values);
-
-            const token = localStorage.getItem('authToken');
             const method = editingDisease ? 'PUT' : 'POST';
-            const url = editingDisease
-                ? `/api/diseases/${editingDisease.id}/`
-                : '/api/diseases/';
+             // ✅ SỬA LẠI ENDPOINT API CHO ĐÚNG
+            const url = editingDisease ? `/api/loai-benh/${editingDisease.id}/` : '/api/loai-benh/';
+            
             const response = await fetch(url, {
                 method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(values)
             });
+
             if (response.ok) {
                 message.success(`${editingDisease ? 'Cập nhật' : 'Thêm'} thành công!`);
                 setIsModalVisible(false);
                 fetchDiseases();
             } else {
-                const err = await response.json();
-                message.error(`Lỗi: ${err.detail || JSON.stringify(err)}`);
+                const err = await response.json().catch(() => ({}));
+                message.error(`Lỗi: ${Object.values(err).flat().join(' ')}`);
             }
         } catch (error) {
-            console.error(error);
+            console.log('Validation/API error:', error);
         }
     };
 
     const handleDelete = async (id) => {
         try {
-            const token = localStorage.getItem('authToken');
-            const response = await fetch(`/api/diseases/${id}/`, {
+            // ✅ SỬA LẠI ENDPOINT API CHO ĐÚNG
+            const response = await fetch(`/api/loai-benh/${id}/`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: getAuthHeaders()
             });
             if (response.ok || response.status === 204) {
-                message.success('Đã xóa loại bệnh');
+                message.success('Đã xóa loại bệnh.');
                 fetchDiseases();
             } else {
-                message.error('Xóa thất bại');
+                message.error('Xóa thất bại. Có thể loại bệnh này đang được sử dụng.');
             }
         } catch {
-            message.error('Lỗi kết nối khi xóa');
+            message.error('Lỗi kết nối khi xóa.');
         }
     };
 
+    // Table Columns
     const columns = [
+        { title: 'STT', key: 'stt', render: (text, record, index) => index + 1, width: 80, align: 'center' },
+        { title: 'Tên loại bệnh', dataIndex: 'ten_loai_benh', sorter: (a, b) => a.ten_loai_benh.localeCompare(b.ten_loai_benh) },
         {
-            title: 'ID',
-            dataIndex: 'id',
-            key: 'id',
-            align: 'center',
-            width: 80
-        },
-        {
-            title: 'Tên loại bệnh',
-            dataIndex: 'ten_loai_benh',
-            key: 'ten_loai_benh',
-        },
-        {
-            title: 'Sửa đổi',
-            key: 'actions',
-            align: 'center',
+            title: 'Hành động', key: 'action', width: 120, align: 'center',
             render: (_, record) => (
                 <Space>
-                    {canChange && (
-                        <Button icon={<EditOutlined />} onClick={() => showModal(record)} />
-                    )}
-                    {canDelete && (
-                        <Popconfirm title="Xóa loại bệnh này?" onConfirm={() => handleDelete(record.id)}>
-                            <Button danger icon={<DeleteOutlined />} />
-                        </Popconfirm>
-                    )}
+                    {canChange && <Tooltip title="Sửa"><Button shape="circle" icon={<EditOutlined />} onClick={() => showModal(record)} /></Tooltip>}
+                    {canDelete && <Popconfirm title="Xóa loại bệnh này?" onConfirm={() => handleDelete(record.id)}><Tooltip title="Xóa"><Button shape="circle" danger icon={<DeleteOutlined />} /></Tooltip></Popconfirm>}
                 </Space>
             )
         }
     ];
 
     return (
-        <div>
+        <div style={{ padding: 24 }}>
+             <Button type="link" onClick={() => navigate('/dashboard/regulations')} style={{ marginBottom: 16 }}>
+                ← Quay lại Quản lý Quy định
+            </Button>
             <Title level={3}>Quản lý Loại bệnh</Title>
-            <Space style={{ marginBottom: 16 }}>
-                <Button icon={<ReloadOutlined />} onClick={fetchDiseases} loading={loading}>
-                    Tải lại
-                </Button>
-                {canAdd && (
-                    <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
-                        Thêm loại bệnh
-                    </Button>
-                )}
-            </Space>
+            <Card>
+                <Row justify="space-between" align="middle" gutter={[16, 16]}>
+                    <Col xs={24} sm={12} md={14}>
+                        <Search
+                            placeholder="Tìm theo tên loại bệnh..."
+                            onSearch={value => setSearchText(value)}
+                            onChange={e => !e.target.value && setSearchText('')}
+                            allowClear
+                            enterButton
+                        />
+                    </Col>
+                    <Col xs={24} sm={12} md={10} style={{ textAlign: 'right' }}>
+                        <Space>
+                            <Button icon={<ReloadOutlined />} onClick={fetchDiseases} loading={loading} />
+                            {canAdd && <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>Thêm loại bệnh</Button>}
+                        </Space>
+                    </Col>
+                </Row>
+            </Card>
             <Table
                 columns={columns}
-                dataSource={diseases}
+                dataSource={filteredDiseases}
                 rowKey="id"
                 bordered
                 loading={loading}
+                style={{ marginTop: 16 }}
             />
             <Modal
                 title={editingDisease ? 'Sửa loại bệnh' : 'Thêm loại bệnh'}
                 open={isModalVisible}
                 onOk={handleOk}
                 onCancel={() => setIsModalVisible(false)}
+                destroyOnClose
             >
-                <Form form={form} layout="vertical">
+                <Form form={form} layout="vertical" style={{ marginTop: 24 }} onFinish={handleOk}>
                     <Form.Item
                         name="ten_loai_benh"
                         label="Tên loại bệnh"
                         rules={[{ required: true, message: 'Vui lòng nhập tên loại bệnh' }]}
                     >
-                        <Input />
+                        <Input placeholder="Ví dụ: Cảm cúm, Sốt siêu vi..." />
                     </Form.Item>
                 </Form>
             </Modal>

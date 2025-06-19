@@ -29,6 +29,7 @@ import RegulationPage from "./RegulationPage";
 import DiseasesPage from "./Regulations/DiseasesPage";
 import UnitsPage from "./Regulations/UnitsPage";
 import UsagesPage from "./Regulations/UsagesPage";
+import MedicinePage from "./Regulations/MedicinePage";
 
 // === CÁC COMPONENT MỚI CHO QUẢN LÝ KHÁM BỆNH ===
 import ExaminationManagementPage from "./ExaminationManagementPage"; // Trang chính chứa Tabs
@@ -208,6 +209,7 @@ export default function App() {
                                 ]} />
                             }>
                             <Route index element={<RegulationPage />} />
+                            <Route path="medicines" element={<MedicinePage />} /> 
                             <Route path="diseases" element={<DiseasesPage />} />
                             <Route path="units" element={<UnitsPage />} />
                             <Route path="usages" element={<UsagesPage />} />

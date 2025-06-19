@@ -92,7 +92,17 @@ class Thuoc(models.Model):
     don_vi_tinh = models.ForeignKey(DonViTinh, verbose_name=_('đơn vị tính'), on_delete=models.PROTECT, related_name='thuoc_theo_don_vi')
     so_luong_ton = models.PositiveIntegerField(_('số lượng tồn'), default=0)
     don_gia = models.DecimalField(_('đơn giá'), max_digits=12, decimal_places=0, default=0) # Tăng max_digits cho đơn giá lớn
-    # han_su_dung = models.DateField(_('hạn sử dụng'), null=True, blank=True)
+    han_su_dung = models.DateField(_('hạn sử dụng'), null=True, blank=True)
+    
+    cach_dung_mac_dinh = models.ForeignKey(
+        CachDung,
+        verbose_name=_('cách dùng mặc định'),
+        on_delete=models.SET_NULL, # Nếu xóa cách dùng, thuốc không bị xóa theo
+        null=True,
+        blank=True,
+        related_name='thuoc_theo_cach_dung'
+    )
+    
     class Meta: verbose_name = _("Thuốc"); verbose_name_plural = _("Các Loại Thuốc"); ordering = ['ten_thuoc']
     def __str__(self): return self.ten_thuoc
 

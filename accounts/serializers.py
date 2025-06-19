@@ -101,7 +101,27 @@ class ThuocSerializer(serializers.ModelSerializer):
     don_vi_tinh = DonViTinhSerializer(read_only=True)
     don_vi_tinh_id = serializers.PrimaryKeyRelatedField(queryset=DonViTinh.objects.all(), source='don_vi_tinh', write_only=True)
     class Meta: model = Thuoc; fields = ['id', 'ten_thuoc', 'don_vi_tinh_id', 'don_vi_tinh', 'so_luong_ton', 'don_gia']
-
+    cach_dung_mac_dinh = CachDungSerializer(read_only=True)
+    cach_dung_mac_dinh_id = serializers.PrimaryKeyRelatedField(
+        queryset=CachDung.objects.all(), 
+        source='cach_dung_mac_dinh', 
+        write_only=True, 
+        required=False, # Không bắt buộc
+        allow_null=True
+    )
+    class Meta:
+        model = Thuoc
+        fields = [
+            'id', 
+            'ten_thuoc', 
+            'don_vi_tinh', 
+            'don_vi_tinh_id',
+            'so_luong_ton', 
+            'don_gia', 
+            'han_su_dung', 
+            'cach_dung_mac_dinh', 
+            'cach_dung_mac_dinh_id',
+        ]
 class QuyDinhValueSerializer(serializers.ModelSerializer):
     ma_quy_dinh_display = serializers.CharField(source='get_ma_quy_dinh_display', read_only=True)
     class Meta: model = QuyDinhValue; fields = ['ma_quy_dinh', 'ma_quy_dinh_display', 'gia_tri']
