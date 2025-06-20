@@ -1,22 +1,14 @@
-/* file này được load trong tenmplates/frontend/index.html */
-html,
-body {
+html, body, #root {
     height: 100%;
     margin: 0;
     padding: 0;
-    /* color: white; */
+    overflow: hidden; 
 }
 
-#main {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    left: 0;
-    top: 0;
-}
-
-#app {
-    position: fixed;
-    width: 100%;
-    height: 100%;
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }

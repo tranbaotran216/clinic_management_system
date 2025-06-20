@@ -1,128 +1,117 @@
-// frontend/src/components/DashboardHomepage.js
-import React, { useContext, useEffect, useState } from 'react';
-import { AuthContext } from './App'; // Đảm bảo đường dẫn đúng
-import { Row, Col, Card, Statistic, Typography, Spin, Alert } from 'antd';
-import { DollarCircleOutlined, SolutionOutlined } from '@ant-design/icons';
+// frontend/src/components/DashboardHomepage.js (PHIÊN BẢN ĐÃ DECOR)
 
-const { Title, Paragraph } = Typography;
+import React, { useState, useEffect, useContext } from 'react';
+import { Typography, Row, Col, Card, Statistic, Spin, Alert, Avatar, Space } from 'antd';
+import { TeamOutlined, DollarCircleOutlined, UserOutlined } from '@ant-design/icons';
+import { AuthContext } from './App';
 
-const DashboardHomePage = () => { // Đổi tên component nếu tên file khác
+const { Title, Text } = Typography;
+
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('authToken');
+    return { 'Authorization': `Bearer ${token}` };
+};
+
+const DashboardHomePage = () => {
     const { currentUser } = useContext(AuthContext);
     const [summaryData, setSummaryData] = useState(null);
-    const [loadingSummary, setLoadingSummary] = useState(true); // Bắt đầu là true
-    const [errorSummary, setErrorSummary] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
-        console.log("DHP useEffect: currentUser is", currentUser);
-        if (!currentUser || !currentUser.permissions) { // Quan trọng: Kiểm tra cả permissions
-            console.log("DHP: currentUser or permissions not ready, setting loadingSummary=false");
-            setLoadingSummary(false); // Không fetch nếu user hoặc permissions chưa sẵn sàng
-            setSummaryData({}); // Đảm bảo không hiển thị dữ liệu cũ hoặc lỗi
-            return;
+        if (currentUser) {
+            const fetchSummary = async () => {
+                setLoading(true);
+                setError('');
+                try {
+                    const response = await fetch('/api/dashboard/summary/', { headers: getAuthHeaders() });
+                    if (response.ok) {
+                        const data = await response.json();
+                        setSummaryData(data);
+                    } else {
+                        throw new Error(`Lỗi ${response.status}: Không thể tải dữ liệu tóm tắt.`);
+                    }
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchSummary();
+        }
+    }, [currentUser]);
+
+    const formatCurrency = (amount) => {
+        if (typeof amount !== 'number') return '...';
+        return new Intl.NumberFormat('vi-VN').format(amount);
+    };
+
+    // Card chào mừng theo thiết kế
+    const WelcomeCard = () => (
+        <Card style={{ background: 'linear-gradient(135deg, #e6f7ff 0%, #f6ffed 100%)', border: 'none' }}>
+            <Space direction="vertical" align="center" style={{ width: '100%' }}>
+                <Avatar size={80} icon={<UserOutlined />} style={{ backgroundColor: '#fff', color: '#1890ff', border: '2px solid #91d5ff' }} />
+                <Title level={4} style={{ marginTop: 16, marginBottom: 0 }}>Chào Mừng Bạn!</Title>
+                <Text type="secondary">{currentUser?.ho_ten}</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>{currentUser?.email}</Text>
+            </Space>
+        </Card>
+    );
+
+    // Card thống kê
+    const StatCard = ({ icon, title, value, color, loading }) => (
+        <Card loading={loading} style={{ border: 'none', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' }}>
+            <Statistic
+                title={<Space>{icon}{title}</Space>}
+                value={value}
+                valueStyle={{ color: color, fontSize: '2.5rem', fontWeight: 500 }}
+            />
+        </Card>
+    );
+    
+    // Logic render chính
+    const renderContent = () => {
+        if (error) {
+            return <Alert message="Lỗi" description={error} type="error" showIcon />;
         }
 
-        const fetchSummary = async () => {
-            console.log("DHP fetchSummary: STARTING, setLoadingSummary(true)");
-            setLoadingSummary(true);
-            setErrorSummary('');
-            try {
-                const token = localStorage.getItem('authToken');
-                // console.log("DHP fetchSummary: Token is", token);
-                if (!token) {
-                    setErrorSummary('Token không tồn tại để lấy summary.');
-                    return; // Không fetch nếu không có token (finally sẽ set loading false)
-                }
+        return (
+            <Row gutter={[24, 24]}>
+                {/* Cột Chào mừng */}
+                <Col xs={24} md={8}>
+                    <WelcomeCard />
+                </Col>
 
-                const response = await fetch('/api/dashboard/summary/', { // URL API summary
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                console.log("DHP fetchSummary: API summary response status:", response.status);
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log("DHP fetchSummary: API summary data OK:", data);
-                    setSummaryData(data);
-                } else {
-                    const errorText = await response.text();
-                    console.error("DHP fetchSummary: API Summary Error - Status:", response.status, "Text:", errorText);
-                    setErrorSummary(`Lỗi tải summary: ${response.status}`);
-                    setSummaryData({});
-                }
-            } catch (error) {
-                console.error("DHP fetchSummary: CATCH block - Error fetching summary:", error);
-                setErrorSummary('Lỗi mạng hoặc lỗi xử lý khi tải summary.');
-                setSummaryData({});
-            } finally {
-                console.log("DHP fetchSummary: FINALLY block, setLoadingSummary(false)");
-                setLoadingSummary(false); // LUÔN LUÔN GỌI Ở ĐÂY
-            }
-        };
-
-        fetchSummary();
-
-    }, [currentUser]); // Chạy lại khi currentUser thay đổi
-
-    // Logic render giữ nguyên như file bạn đã cung cấp
-    // Chỉ cần đảm bảo currentUser được kiểm tra trước khi truy cập permissions
-    if (!currentUser) {
-         // RequireAuth nên xử lý việc này, nhưng để an toàn:
-        return <Spin tip="Đang chờ thông tin người dùng..." style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 150px)' }} />;
-    }
-
-    if (loadingSummary) {
-        return <Spin tip="Đang tải dữ liệu dashboard..." style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 150px)' }} />;
-    }
-
-    const userPermissions = currentUser.permissions || [];
-    const canViewAppointmentCount = userPermissions.includes('appointments.view_daily_appointment_count');
-    const canViewRevenue = userPermissions.includes('reports.view_daily_revenue_summary');
+                {/* Cột Thống kê */}
+                <Col xs={24} md={16}>
+                    <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                        <StatCard
+                            loading={loading}
+                            icon={<TeamOutlined style={{ color: '#1890ff' }} />}
+                            title="Lượt khám bệnh hôm nay"
+                            value={summaryData?.daily_appointments ?? 0}
+                            color="#1890ff"
+                        />
+                        <StatCard
+                            loading={loading}
+                            icon={<DollarCircleOutlined style={{ color: '#52c41a' }}/>}
+                            title="Doanh thu hôm nay"
+                            value={`${formatCurrency(summaryData?.daily_revenue ?? 0)} VNĐ`}
+                            color="#3f8600"
+                        />
+                    </Space>
+                </Col>
+            </Row>
+        );
+    };
 
     return (
-        // ... (phần JSX render giữ nguyên như file DashboardHomepage.js bạn gửi) ...
         <div>
-            <Title level={2} style={{ marginBottom: '4px' }}>Chào mừng {currentUser.ho_ten || currentUser.ten_dang_nhap}!</Title>
-            <Paragraph type="secondary" style={{ marginBottom: '24px' }}>Đây là trang tổng quan chính của phòng mạch.</Paragraph>
-
-            {errorSummary && !loadingSummary && <Alert message="Lỗi Tải Dữ Liệu" description={errorSummary} type="error" showIcon style={{ marginBottom: 16 }} />}
-
-            {!loadingSummary && !errorSummary && (
-                <Row gutter={[16, 16]}>
-                    {(canViewAppointmentCount && summaryData && summaryData.daily_appointments !== undefined) && (
-                        <Col xs={24} sm={12} md={8} lg={6}>
-                            <Card hoverable>
-                                <Statistic
-                                    title="Lượt khám hôm nay"
-                                    value={summaryData.daily_appointments}
-                                    prefix={<SolutionOutlined />}
-                                    valueStyle={{ color: '#3f8600' }}
-                                />
-                            </Card>
-                        </Col>
-                    )}
-                    {(canViewRevenue && summaryData && summaryData.daily_revenue !== undefined) && (
-                        <Col xs={24} sm={12} md={8} lg={6}>
-                            <Card hoverable>
-                                <Statistic
-                                    title="Doanh thu hôm nay"
-                                    value={summaryData.daily_revenue}
-                                    precision={0}
-                                    prefix={<DollarCircleOutlined />}
-                                    suffix="VNĐ"
-                                    valueStyle={{ color: '#cf1322' }}
-                                />
-                            </Card>
-                        </Col>
-                    )}
-                </Row>
-            )}
-            {!loadingSummary && !errorSummary &&
-             !(canViewAppointmentCount && summaryData && summaryData.daily_appointments !== undefined) &&
-             !(canViewRevenue && summaryData && summaryData.daily_revenue !== undefined) &&
-             (Object.keys(summaryData || {}).length === 0 || (summaryData && summaryData.message)) &&
-                <Alert message="Thông báo" description={summaryData?.message || "Không có thông tin tóm tắt nào được hiển thị cho bạn."} type="info" showIcon />
-            }
+            {/* Header chung có thể nằm ở DashboardLayout */}
+            {/* <Title level={3}>Dashboard</Title> */}
+            {renderContent()}
         </div>
     );
 };
 
-export default DashboardHomePage; // Hoặc DashboardHomepage
+export default DashboardHomePage;

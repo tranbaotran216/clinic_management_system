@@ -42,6 +42,8 @@ export const permissionTranslations = {
   'accounts.view_hoadon': 'Xem Hóa đơn',
   
   // === QUẢN LÝ DƯỢC ===
+  'accounts.view_quidinh' : 'Xem quản lý qui định',
+
   'accounts.add_thuoc': 'Thêm mới Thuốc',
   'accounts.change_thuoc': 'Cập nhật thông tin Thuốc',
   'accounts.delete_thuoc': 'Xóa Thuốc',
