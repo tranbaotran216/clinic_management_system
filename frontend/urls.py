@@ -7,6 +7,7 @@ urlpatterns = [
     path('services', index),
     path('intro', index),
     path('login', index),
+    path('register-appointment', index),
     path('unauthorized', index), # Thêm cho trang không có quyền
 
     # Path cho trang dashboard chính

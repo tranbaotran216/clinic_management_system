@@ -12,6 +12,8 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from './App';
 import dayjs from 'dayjs';
 
+import eventBus from './utils/eventBus';
+
 const { Title } = Typography;
 const { Option } = Select;
 const { Search } = Input;
@@ -228,6 +230,7 @@ const WaitingListPage = () => {
                 throw new Error(Object.values(errorData).flat().join(' '));
             }
             message.success("Tạo phiếu khám thành công!");
+            eventBus.emit('pkb-created') // tạo
             handlePKBCancel();
             fetchData(selectedDate);
         } catch (error) {

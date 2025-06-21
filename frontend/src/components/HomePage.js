@@ -1,7 +1,24 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Layout, Menu, Button, Typography, Row, Col, Card, Space } from 'antd'; // Import các component AntD
-import { LoginOutlined, ScheduleOutlined, HomeOutlined, InfoCircleOutlined, SolutionOutlined } from '@ant-design/icons'; // Import icons
+
+import {
+    Layout,
+    Menu,
+    Button,
+    Typography,
+    Row,
+    Col,
+    Card,
+    Space
+} from 'antd';
+
+import {
+    LoginOutlined,
+    ScheduleOutlined,
+    HomeOutlined,
+    InfoCircleOutlined,
+    SolutionOutlined
+} from '@ant-design/icons';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Paragraph } = Typography;
@@ -9,10 +26,8 @@ const { Title, Paragraph } = Typography;
 const HomePage = () => {
     const navigate = useNavigate();
 
-    // Hàm xử lý khi click nút Đăng ký khám bệnh (bạn có thể thay đổi navigate đến trang thật sau)
     const handleRegisterAppointment = () => {
-        // navigate('/register-appointment'); // Ví dụ: điều hướng đến trang đăng ký khám
-        alert('Đi tới trang đăng ký khám bệnh (chức năng này sẽ được phát triển sau)');
+        navigate('/register-appointment');
     };
 
     return (
@@ -25,7 +40,12 @@ const HomePage = () => {
                         Phòng Mạch Tư
                     </Link>
                 </div>
-                <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['home']} style={{ lineHeight: '64px', flexGrow: 1, justifyContent: 'flex-end' }}>
+                <Menu
+                    theme="dark"
+                    mode="horizontal"
+                    defaultSelectedKeys={['home']}
+                    style={{ lineHeight: '64px', flexGrow: 1, justifyContent: 'flex-end' }}
+                >
                     <Menu.Item key="home" icon={<HomeOutlined />}>
                         <Link to="/">Trang chủ</Link>
                     </Menu.Item>
@@ -35,13 +55,22 @@ const HomePage = () => {
                     <Menu.Item key="intro" icon={<InfoCircleOutlined />}>
                         <Link to="/intro">Giới thiệu</Link>
                     </Menu.Item>
-                    {/* Bạn có thể thêm nút Login/Register ở đây nếu muốn */}
                 </Menu>
             </Header>
 
-            {/* Nội dung chính */}
-            <Content style={{ padding: '0 48px', marginTop: 24 }}>
-                <div style={{ background: '#fff', padding: 48, minHeight: 380, textAlign: 'center', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)' }}>
+            {/* Nội dung chính có scroll */}
+            <Content style={{ padding: '0 48px', marginTop: 24, overflow: 'hidden' }}>
+                <div
+                    style={{
+                        maxHeight: 'calc(100vh - 64px - 70px)',
+                        overflowY: 'auto',
+                        padding: 48,
+                        background: '#fff',
+                        textAlign: 'center',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.09)',
+                    }}
+                >
                     <Title level={2} style={{ marginBottom: 24 }}>
                         Chào mừng đến với Hệ thống Quản lý Phòng mạch Tư
                     </Title>
@@ -50,7 +79,6 @@ const HomePage = () => {
                         và tiếp cận các dịch vụ y tế chất lượng cao của chúng tôi.
                     </Paragraph>
 
-                    {/* Các Card giới thiệu (Ví dụ) */}
                     <Row gutter={[16, 24]} justify="center" style={{ marginBottom: 40 }}>
                         <Col xs={24} sm={12} md={8}>
                             <Card title="Đặt Lịch Khám Nhanh Chóng" hoverable>
@@ -72,8 +100,6 @@ const HomePage = () => {
                         </Col>
                     </Row>
 
-
-                    {/* Nút hành động */}
                     <Space size="large">
                         <Button
                             type="primary"
@@ -84,7 +110,7 @@ const HomePage = () => {
                             Đăng nhập Hệ thống
                         </Button>
                         <Button
-                            type="default" // Hoặc type="primary" ghost
+                            type="default"
                             icon={<ScheduleOutlined />}
                             size="large"
                             onClick={handleRegisterAppointment}

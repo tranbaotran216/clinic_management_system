@@ -45,7 +45,22 @@ const DashboardLayout = () => {
         navigate('/login');
     };
 
-    const userDropdownItems = [ /* ... */ ];
+    const userDropdownItems = [
+      {
+        key: 'profile',
+        label: <span onClick={() => navigate('/dashboard/profile')}>Thông tin tài khoản</span>,
+        icon: <UserOutlined />,
+      },
+      {
+        type: 'divider',
+      },
+      {
+        key: 'logout',
+        label: <span onClick={handleLogout}>Đăng xuất</span>,
+        icon: <LogoutOutlined />,
+      },
+    ];
+
     const menuItems = generateMenuItems(rawMenuConfig, currentUser.permissions);
     
     const pathSnippets = location.pathname.split('/').filter(i => i);

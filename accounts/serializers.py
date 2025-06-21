@@ -207,6 +207,46 @@ class DSKhamUpdateSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+    
+class PublicAppointmentSerializer(serializers.Serializer):
+    ho_ten = serializers.CharField(max_length=100)
+    nam_sinh = serializers.IntegerField()
+    gioi_tinh = serializers.ChoiceField(choices=[('M', 'Nam'), ('F', 'Nữ')])
+    dia_chi = serializers.CharField(max_length=255, allow_blank=True, required=False)
+    ngay_kham = serializers.DateField()
+    trieu_chung = serializers.CharField(allow_blank=True, required=False)
+
+    def validate(self, data):
+        max_patients = get_so_benh_nhan_toi_da()
+        count = DSKham.objects.filter(ngay_kham=data['ngay_kham']).count()
+        if count >= max_patients:
+            raise serializers.ValidationError("Đã đầy lịch khám trong ngày này.")
+        return data
+
+    def get_or_create_benh_nhan(self, validated_data):
+        return BenhNhan.objects.get_or_create(
+            ho_ten=validated_data['ho_ten'],
+            nam_sinh=validated_data['nam_sinh'],
+            gioi_tinh=validated_data['gioi_tinh'],
+            defaults={'dia_chi': validated_data.get('dia_chi', '')}
+        )
+
+    def create(self, validated_data):
+        # 1. Tạo hoặc lấy bệnh nhân
+        benh_nhan, _ = self.get_or_create_benh_nhan(validated_data)
+
+        # 2. Tạo lịch khám mới (chưa khám nên chưa tạo PKB)
+        lich_kham = DSKham.objects.create(
+            benh_nhan=benh_nhan,
+            ngay_kham=validated_data['ngay_kham']
+        )
+
+        # Nếu muốn lưu triệu chứng lại tạm thì có thể lưu vào `ghi_chu` của DSKham (nếu có)
+        # hoặc bỏ qua hoàn toàn nếu `PKB` mới là nơi lưu triệu chứng chính xác
+
+        return lich_kham
+
+
 
 
 # --- Phiếu Khám Bệnh (PKB) và các chi tiết (Giữ nguyên) ---

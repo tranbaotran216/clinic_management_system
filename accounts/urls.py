@@ -20,6 +20,7 @@ from .views import (
     DSKhamViewSet,
     PKBViewSet,
     HoaDonViewSet,
+    PublicAppointmentView,
     
     # --- APIViews MỚI cho Báo cáo ---
     MedicationUsageReportView,
@@ -52,7 +53,7 @@ router.register(r'hoa-don', HoaDonViewSet, basename='hoadon')
 
 # --- DANH SÁCH URL CỦA APP ACCOUNTS ---
 urlpatterns = [
-    # URLs cho các API đơn lẻ (Class-Based Views không thuộc ViewSet)
+  # URLs cho các API đơn lẻ (Class-Based Views không thuộc ViewSet)
   #  path('auth/register/', RegisterView.as_view(), name='auth_register'),
     path('login/', LoginView.as_view(), name='auth_login'),
     path('auth/me/', CurrentUserDetailView.as_view(), name='current_user_details'),
@@ -69,4 +70,6 @@ urlpatterns = [
     # Ví dụ: /api/users/, /api/groups/
     path('', include(router.urls)), # Giữ lại dòng này là đủ nếu project urls.py đã có prefix 'api/'
     # Bỏ dòng path('api/', include(router.urls)), vì nó sẽ tạo ra /api/api/users/ (lặp prefix)
+    path('register-appointment/', PublicAppointmentView.as_view(), name='register-appointment' )
+
 ]

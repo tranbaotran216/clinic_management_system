@@ -4,6 +4,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Typography, Row, Col, Card, Statistic, Spin, Alert, Avatar, Space } from 'antd';
 import { TeamOutlined, DollarCircleOutlined, UserOutlined } from '@ant-design/icons';
 import { AuthContext } from './App';
+import eventBus from './utils/eventBus';
 
 const { Title, Text } = Typography;
 
@@ -38,6 +39,12 @@ const DashboardHomePage = () => {
                 }
             };
             fetchSummary();
+
+            eventBus.on('pkb-created', fetchSummary);
+            
+            return () => {
+                eventBus.off('pkb-created', fetchSummary);
+            }
         }
     }, [currentUser]);
 

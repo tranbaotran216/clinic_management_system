@@ -31,6 +31,8 @@ import UnitsPage from "./Regulations/UnitsPage";
 import UsagesPage from "./Regulations/UsagesPage";
 import MedicinePage from "./Regulations/MedicinePage";
 import ReportsPage from './ReportsPage'; // ✅ BƯỚC 1: IMPORT COMPONENT MỚI
+import RegisterAppointmentPage from "./RegisterAppointmentPage";
+import ProfilePage from "./ProfilePage";
 
 const { Title } = Typography;
 
@@ -132,10 +134,13 @@ export default function App() {
                     <Route path="/intro" element={<Intro />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/unauthorized" element={<UnAuthorized />} />
+                    <Route path="/register-appointment" element={<RegisterAppointmentPage />} />
 
                     {/* ===== DASHBOARD ROUTES (PROTECTED) ===== */}
                     <Route path="/dashboard" element={<RequireAuth><DashboardLayout /></RequireAuth>}>
                         <Route index element={<DashboardHomepage />} />
+                        {/* trang Profile */}
+                        <Route path="profile" element={<ProfilePage />} />
 
                         {/* 1. Quản lý Tài khoản & Vai trò */}
                         <Route element={<PrivateRoute requiredPermissions={["accounts.view_taikhoan", "auth.view_group"]} />}>

@@ -1,4 +1,4 @@
-from rest_framework import generics, status, views as drf_views, viewsets
+from rest_framework import permissions, generics, status, views as drf_views, viewsets
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
@@ -23,7 +23,7 @@ from .serializers import (
     GroupSerializer, PermissionSerializer, GroupCreateUpdateSerializer,
     # Serializers cho Nghiệp vụ khám bệnh
     BenhNhanSerializer, DSKhamSerializer, DSKhamCreateSerializer, DSKhamUpdateSerializer,
-    PKBSerializer, PKBCreateUpdateSerializer, HoaDonSerializer,
+    PKBSerializer, PKBCreateUpdateSerializer, HoaDonSerializer, PublicAppointmentSerializer,
     # Serializers cho Danh mục
     LoaiBenhSerializer, ThuocSerializer, DonViTinhSerializer, CachDungSerializer,
     QuyDinhValueSerializer, QuyDinhValueUpdateSerializer,
@@ -33,6 +33,7 @@ from .serializers import (
 from .permissions import isManager
 from rest_framework.permissions import IsAuthenticated, AllowAny, DjangoModelPermissions
 from rest_framework.decorators import action
+from rest_framework.views import APIView
 
 
 # ===================================================================
@@ -171,6 +172,23 @@ class PKBViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         pkb_instance = serializer.save()
         pkb_instance.tao_hoac_cap_nhat_hoa_don()
+
+#đăng ký ở trang HomePage
+class PublicAppointmentView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = PublicAppointmentSerializer(data=request.data)
+        if serializer.is_valid():
+            appointment = serializer.save()
+            return Response({
+                "message": "Đăng ký thành công",
+                "ma_lich_kham": appointment.id,
+                "ngay_kham": appointment.ngay_kham,
+                "ten_benh_nhan": appointment.benh_nhan.ho_ten
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class HoaDonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = HoaDon.objects.select_related('phieu_kham_benh__benh_nhan').all().order_by('-ngay_thanh_toan')
