@@ -139,3 +139,10 @@ REST_FRAMEWORK = {
 }
 
 AUTH_USER_MODEL = 'accounts.TaiKhoan'
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # hoặc lâu hơn
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
