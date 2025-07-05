@@ -1,0 +1,179 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Tài Khoản - Phân quyền</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV6F" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Sửa đường dẫn CSS -->
+    <link rel="stylesheet" href="{% static 'pages/style.css' %}">
+</head>
+<body class="permission-management-page">
+    <div class="main-content-wrapper">
+        <div class="top-page-layout">
+            <div class="breadcrumb">
+                <a href="{% url 'pages:admin_dashboard' %}"><img src="{% static 'pages/images/home.png' %}" class="breadcrumb-icon purple-tint"></a>
+                <img src="{% static 'pages/images/arrow.png' %}" class="breadcrumb-arrow-img purple-tint">
+                <a href="#">Quản lý vai trò</a> <!-- Sửa sau -->
+                <img src="{% static 'pages/images/arrow.png' %}" class="breadcrumb-arrow-img purple-tint">
+                <span>Phân quyền</span>
+            </div>
+            <div class="header-action-button">
+                <button class="btn btn-close-page btn-purple-outline" onclick="window.history.back()">
+                    <i class="fa-solid fa-xmark"></i> Đóng
+                </button>
+            </div>
+        </div>
+
+        <div class="add-account-card permission-management-card">
+            <!-- Tên vai trò sẽ được điền vào đây -->
+            <div class="card-title" id="groupNameTitle">Đang tải...</div>
+            
+            <form id="permissionForm">
+                <div class="permission-list-content">
+                    <!-- Các checkbox sẽ được tạo bởi JS -->
+                    <div class="permission-list-grid" id="permissionListGrid">
+                        <p>Đang tải danh sách quyền...</p>
+                    </div>
+                    
+                    <!-- Div để hiển thị thông báo -->
+                    <div id="formMessage" style="margin: 15px 0; text-align: center; font-weight: 600;"></div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary-cancel" onclick="window.history.back()">
+                            <i class="fa-solid fa-xmark"></i> Hủy
+                        </button>
+                        <button type="button" class="btn btn-reset-form" id="resetButton">
+                            <i class="fa-solid fa-arrows-rotate"></i> Nhập lại
+                        </button>
+                        <button type="submit" class="btn btn-primary-save">
+                            <i class="fa-solid fa-floppy-disk"></i> Lưu
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Truyền group_id từ Django view vào JavaScript -->
+    {{ group_id|json_script:"group-id" }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const accessToken = localStorage.getItem('accessToken');
+            const groupId = JSON.parse(document.getElementById('group-id').textContent);
+            
+            if (!accessToken || !groupId) {
+                alert("Không tìm thấy thông tin xác thực hoặc ID vai trò.");
+                window.location.href = "{% url 'pages:login' %}"; // Hoặc trang quản lý vai trò
+                return;
+            }
+
+            const permissionGrid = document.getElementById('permissionListGrid');
+            const groupNameTitle = document.getElementById('groupNameTitle');
+            const permissionForm = document.getElementById('permissionForm');
+            const formMessage = document.getElementById('formMessage');
+
+            let allPermissions = [];
+            let originalGroupPermissions = new Set();
+
+            try {
+                // --- 1. LẤY TẤT CẢ QUYỀN VÀ QUYỀN HIỆN TẠI CỦA GROUP ---
+                const [permissionsResponse, groupResponse] = await Promise.all([
+                    fetch('/api/permissions/', { headers: { 'Authorization': `Bearer ${accessToken}` } }),
+                    fetch(`/api/groups/${groupId}/`, { headers: { 'Authorization': `Bearer ${accessToken}` } })
+                ]);
+
+                if (!permissionsResponse.ok || !groupResponse.ok) {
+                    throw new Error("Lỗi khi tải dữ liệu ban đầu.");
+                }
+
+                allPermissions = await permissionsResponse.json();
+                const groupData = await groupResponse.json();
+
+                // Cập nhật tên vai trò
+                groupNameTitle.textContent = `Phân quyền cho vai trò: ${groupData.name}`;
+
+                // Lưu lại các quyền gốc của group
+                groupData.permissions.forEach(p => originalGroupPermissions.add(p.id));
+
+                // --- 2. RENDER RA CÁC CHECKBOX ---
+                renderPermissions();
+                
+                // Nút reset sẽ tick lại các checkbox về trạng thái ban đầu
+                document.getElementById('resetButton').addEventListener('click', renderPermissions);
+
+            } catch (error) {
+                permissionGrid.innerHTML = `<p style="color:red;">${error.message}</p>`;
+            }
+
+            function renderPermissions() {
+                permissionGrid.innerHTML = ''; // Xóa nội dung cũ
+                const column1 = document.createElement('div');
+                column1.className = 'permission-column';
+                const column2 = document.createElement('div');
+                column2.className = 'permission-column';
+
+                allPermissions.forEach((permission, index) => {
+                    const isChecked = originalGroupPermissions.has(permission.id) ? 'checked' : '';
+                    const permissionItemHTML = `
+                        <div class="permission-item">
+                            <input type="checkbox" id="perm_${permission.id}" name="permissions" value="${permission.id}" ${isChecked}>
+                            <label for="perm_${permission.id}">${permission.name}</label>
+                        </div>
+                    `;
+                    // Chia đều ra 2 cột
+                    if (index % 2 === 0) {
+                        column1.insertAdjacentHTML('beforeend', permissionItemHTML);
+                    } else {
+                        column2.insertAdjacentHTML('beforeend', permissionItemHTML);
+                    }
+                });
+                permissionGrid.appendChild(column1);
+                permissionGrid.appendChild(column2);
+            }
+
+            // --- 3. XỬ LÝ SUBMIT FORM ---
+            permissionForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                formMessage.textContent = '';
+                
+                // Lấy tất cả các checkbox đã được tick
+                const selectedPermissionIds = Array.from(document.querySelectorAll('input[name="permissions"]:checked'))
+                                                  .map(checkbox => parseInt(checkbox.value));
+                
+                try {
+                    const response = await fetch(`/api/groups/${groupId}/assign-permissions/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}', // Django sẽ render token ở đây
+                            'Authorization': `Bearer ${accessToken}`
+                        },
+                        body: JSON.stringify({ permission_ids: selectedPermissionIds })
+                    });
+                    
+                    const responseData = await response.json();
+
+                    if(response.ok) {
+                        formMessage.textContent = 'Cập nhật quyền thành công!';
+                        formMessage.style.color = 'green';
+                        // Cập nhật lại trạng thái quyền gốc để nút reset hoạt động đúng
+                        originalGroupPermissions = new Set(selectedPermissionIds);
+                    } else {
+                        formMessage.textContent = responseData.detail || 'Có lỗi xảy ra.';
+                        formMessage.style.color = 'red';
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi cập nhật quyền:', error);
+                    formMessage.textContent = 'Lỗi kết nối đến server.';
+                    formMessage.style.color = 'red';
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>

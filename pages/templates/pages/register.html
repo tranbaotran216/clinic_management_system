@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký khám bệnh - Medical Clinic</title>
+    <!-- Sửa đường dẫn CSS -->
+    <link rel="stylesheet" href="{% static 'pages/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="register-page">
+
+    <main class="register-main-content">
+        <div class="register-card-container">
+            <div class="register-illustration">
+                <!-- Sửa đường dẫn ảnh -->
+                <img src="{% static 'pages/images/docnpatient2.png' %}" alt="Bác sĩ khám bệnh">
+            </div>
+            <div class="register-form-content">
+                <h2>Đăng ký khám bệnh</h2>
+                <p class="form-description">Nhập các thông tin dưới đây để đăng ký khám bệnh</p>
+                <!-- Thêm id và sửa tên các trường input -->
+                <form id="registerForm" class="register-form" method="POST">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="ho_ten" class="form-label">Họ và tên:<span class="required-star">*</span></label>
+                        <input type="text" id="ho_ten" name="ho_ten" placeholder="Họ và tên*" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dia_chi" class="form-label">Địa chỉ:<span class="required-star">*</span></label>
+                        <input type="text" id="dia_chi" name="dia_chi" placeholder="Địa chỉ*" required>
+                    </div>
+                    <div class="form-group custom-select-wrapper">
+                        <label for="gioi_tinh" class="form-label">Giới tính:<span class="required-star">*</span></label>
+                        <select id="gioi_tinh" name="gioi_tinh" required>
+                            <option value="" disabled selected hidden>Giới tính*</option>
+                            <option value="M">Nam</option>
+                            <option value="F">Nữ</option>
+                        </select>
+                        <span class="custom-select-arrow"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="nam_sinh" class="form-label">Năm sinh:<span class="required-star">*</span></label>
+                        <input type="number" id="nam_sinh" name="nam_sinh" placeholder="Năm sinh*" min="1900" max="2025" required>
+                    </div>
+                    <div class="form-group date-input-group">
+                        <label for="ngay_kham" class="form-label">Ngày khám:<span class="required-star">*</span></label>
+                        <input type="date" id="ngay_kham" name="ngay_kham" required>
+                        <span class="date-icon">🗓️</span>
+                    </div>
+                    
+                    <!-- Div để hiển thị thông báo -->
+                    <div id="formMessage" style="margin-bottom: 15px; text-align: center; font-weight: 600;"></div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-cancel" onclick="window.location.href='{% url 'pages:index' %}'">Hủy</button>
+                        <button type="reset" class="btn btn-reset">Nhập lại</button>
+                        <button type="submit" class="btn btn-register-submit">Đăng ký</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- === SCRIPT === -->
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formMessage = document.getElementById('formMessage');
+            const submitButton = form.querySelector('button[type="submit"]');
+
+            formMessage.textContent = 'Đang xử lý...';
+            formMessage.style.color = 'black';
+            submitButton.disabled = true;
+
+            const formData = new FormData(form);
+            const data = {
+                ho_ten: formData.get('ho_ten'),
+                dia_chi: formData.get('dia_chi'),
+                gioi_tinh: formData.get('gioi_tinh'),
+                nam_sinh: formData.get('nam_sinh'),
+                ngay_kham: formData.get('ngay_kham'),
+            };
+
+            try {
+                const response = await fetch('/api/register-appointment/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const responseData = await response.json();
+
+                if (response.ok) {
+                    formMessage.innerHTML = `Đăng ký thành công!<br>Mã lịch khám của bạn là: <strong>${responseData.ma_lich_kham}</strong>`;
+                    formMessage.style.color = 'green';
+                    form.reset(); // Xóa các trường đã nhập
+                } else {
+                    let errorMessage = 'Đã có lỗi xảy ra. Vui lòng kiểm tra lại.';
+                    if (typeof responseData === 'object') {
+                        // Lỗi từ serializer, có thể là "Ngày đã đầy"
+                        errorMessage = Object.values(responseData).flat().join(' ');
+                    } else if (responseData.detail) {
+                        errorMessage = responseData.detail;
+                    }
+                    formMessage.textContent = errorMessage;
+                    formMessage.style.color = 'red';
+                }
+
+            } catch (error) {
+                console.error('Lỗi khi đăng ký khám bệnh:', error);
+                formMessage.textContent = 'Lỗi kết nối đến server.';
+                formMessage.style.color = 'red';
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+
+        // Set giá trị mặc định cho ô ngày khám là ngày hôm nay
+        document.getElementById('ngay_kham').valueAsDate = new Date();
+    </script>
+</body>
+</html>

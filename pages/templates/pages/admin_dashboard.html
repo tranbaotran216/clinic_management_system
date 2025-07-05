@@ -1,0 +1,152 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Medical Clinic</title>
+    <!-- SỬA ĐÚNG ĐƯỜNG DẪN CSS -->
+    <link rel="stylesheet" href="{% static 'pages/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="dashboard-page">
+
+    <header class="top-header">
+        <div class="header-left">
+            <i class="fas fa-home header-icon"></i>
+            <span class="header-title">Dashboard</span>
+        </div>
+        <!-- Thêm ID cho nút đăng xuất -->
+        <button class="logout-btn" id="logoutButton">
+            Đăng xuất <i class="fas fa-arrow-right-from-bracket"></i>
+        </button>
+    </header>
+
+    <div class="main-layout">
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <ul>
+                    <!-- SỬA CÁC LIÊN KẾT TRANG -->
+                    <li><a href="{% url 'pages:account_management' %}" class="active">Quản lý tài khoản</a></li>
+                    <li><a href="#">Quản lý khám bệnh <i class="fas fa-chevron-right menu-arrow"></i></a></li>
+                    <li><a href="#">Tra cứu thuốc</a></li>
+                    <li><a href="#">Báo cáo & Thống kê <i class="fas fa-chevron-right menu-arrow"></i></a></li>
+                    <a href="{% url 'pages:regulation_management' %}">Quản lý quy định <i class="fas fa-chevron-right menu-arrow"></i></a>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="content-area">
+            <div class="dashboard-grid">
+                <div class="card welcome-card">
+                    <p class="card-subtitle">Chào Mừng Bạn!</p>
+                    <p class="card-title-small">Dashboard</p>
+                    <div class="user-info">
+                        <div class="avatar-placeholder"></div>
+                        <div class="user-details">
+                            <!-- Thêm ID để JS có thể điền thông tin vào -->
+                            <p class="user-name" id="userName">Đang tải...</p>
+                            <p class="user-email" id="userEmail">...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card stat-card border-stat-card">
+                    <div class="stat-header">
+                        <!-- SỬA ĐƯỜNG DẪN ẢNH -->
+                        <img src="{% static 'pages/images/stethoscope 1.png' %}" alt="Stethoscope Icon" class="stat-icon">
+                        <span class="stat-label">Lượt khám bệnh hôm nay</span>
+                    </div>
+                    <!-- Thêm ID để JS có thể điền thông tin vào -->
+                    <p class="stat-value" id="dailyAppointments">...</p>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="stat-header">
+                        <!-- SỬA ĐƯỜNG DẪN ẢNH -->
+                        <img src="{% static 'pages/images/bar chart.png' %}" alt="Bar chart Icon" class="stat-icon">
+                        <span class="stat-label">Doanh thu hôm nay</span>
+                    </div>
+                    <!-- Thêm ID để JS có thể điền thông tin vào -->
+                    <p class="stat-value" id="dailyRevenue">... <span class="currency">VNĐ</span></p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- === SCRIPT ĐỂ LẤY DỮ LIỆU ĐỘNG === -->
+    <script>
+        // Hàm này sẽ chạy ngay sau khi trang được tải xong
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // --- 1. KIỂM TRA ĐĂNG NHẬP VÀ HIỂN THỊ THÔNG TIN USER ---
+            const accessToken = localStorage.getItem('accessToken');
+            const userString = localStorage.getItem('user');
+            
+            if (!accessToken || !userString) {
+                // Nếu không có token hoặc thông tin user, tức là chưa đăng nhập
+                // Chuyển hướng ngay về trang login
+                window.location.href = "{% url 'pages:login' %}";
+                return; // Dừng thực thi script
+            }
+
+            try {
+                const user = JSON.parse(userString);
+                document.getElementById('userName').textContent = user.ho_ten || 'Không có tên';
+                document.getElementById('userEmail').textContent = user.email || 'Không có email';
+            } catch (error) {
+                console.error("Lỗi khi đọc thông tin user:", error);
+                // Nếu thông tin user bị lỗi, cũng nên đá về trang login
+                localStorage.clear();
+                window.location.href = "{% url 'pages:login' %}";
+            }
+
+            // --- 2. GỌI API LẤY DỮ LIỆU THỐNG KÊ ---
+            async function fetchDashboardData() {
+                try {
+                    const response = await fetch('/api/dashboard/summary/', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // Đính kèm token vào header để xác thực
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Cập nhật dữ liệu lên giao diện
+                        document.getElementById('dailyAppointments').textContent = data.daily_appointments;
+                        // Format lại số tiền cho dễ đọc
+                        document.getElementById('dailyRevenue').innerHTML = `${data.daily_revenue.toLocaleString('vi-VN')} <span class="currency">VNĐ</span>`;
+                    } else if (response.status === 401) {
+                        // Nếu token hết hạn hoặc không hợp lệ
+                        console.error("Token không hợp lệ, cần đăng nhập lại.");
+                        localStorage.clear();
+                        window.location.href = "{% url 'pages:login' %}";
+                    } else {
+                        console.error("Lỗi khi lấy dữ liệu dashboard:", response.statusText);
+                    }
+                } catch (error) {
+                    console.error("Lỗi mạng khi lấy dữ liệu dashboard:", error);
+                }
+            }
+
+            fetchDashboardData();
+
+
+            // --- 3. XỬ LÝ SỰ KIỆN ĐĂNG XUẤT ---
+            document.getElementById('logoutButton').addEventListener('click', function() {
+                // Xóa token và thông tin user khỏi localStorage
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('user');
+                
+                // Chuyển hướng về trang đăng nhập
+                window.location.href = "{% url 'pages:login' %}";
+            });
+
+        });
+    </script>
+</body>
+</html>

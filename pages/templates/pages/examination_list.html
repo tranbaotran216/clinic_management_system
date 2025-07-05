@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Khám Bệnh - Danh sách khám</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body class="examination-list-page">
+    <div class="account-management-container">
+        <div class="top-page-layout">
+            <div class="breadcrumb">
+                <a href="#"><img src="./images/home.png" class="breadcrumb-icon"></a>
+                <img src="./images/arrow.png" class="breadcrumb-arrow"> <a href="#">Quản lý khám bệnh</a>
+                <img src="./images/arrow.png" class="breadcrumb-arrow"> <span>Danh sách khám</span>
+            </div>
+
+            <div class="header-section">
+                <button class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i> Thêm bệnh nhân
+                </button>
+            </div>
+        </div>
+
+        <div class="account-management-card">
+            <div class="table-controls">
+                <div class="date-display">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>Ngày khám: 20/5/2025</span>
+                </div>
+                <div class="control-item">
+                    <span class="label">Lọc</span>
+                    <img src="./images/sort.png" class="icon">
+                </div>
+                <div class="control-item">
+                    <span class="label">Sắp xếp</span>
+                    <img src="./images/downarrow2.png" class="icon">
+                </div>
+                <div class="search-box">
+                    <input type="text" placeholder="Tra cứu" class="form-control search-input">
+                    <i></i><img src="./images/search_glass.png" class="fa-solid fa-magnifying-glass search-icon"></i>
+                </div>
+            </div>
+            <div class="scrollable-table-wrapper">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Họ và tên</th>
+                                <th>Giới tính</th>
+                                <th>Năm sinh</th>
+                                <th>Địa chỉ</th>
+                                <th>Phiếu khám bệnh</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>Dương Thị Tú Yến</td>
+                                <td><span class="role-tag female-role">Nữ</span></td>
+                                <td>2005</td>
+                                <td>Tân Thủy, Lệ Thủy, Quảng Bình</td>
+                                <td class="patient-actions">
+                                    <button class="btn btn-add">Thêm</button>
+                                    <i></i><img src="./images/note.png" class="fa-solid fa-pen-to-square edit-icon"></i>
+                                    <i></i><img src="./images/trashcan.png" class="fa-solid fa-trash-can delete-icon"></i>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>Nguyễn Mai Hảo</td>
+                                <td><span class="role-tag female-role">Nữ</span></td>
+                                <td>2005</td>
+                                <td>Tân Thủy, Lệ Thủy, Quảng Bình</td>
+                                <td class="patient-actions">
+                                    <button class="btn btn-add">Thêm</button>
+                                    <i></i><img src="./images/note.png" class="fa-solid fa-pen-to-square edit-icon"></i>
+                                    <i></i><img src="./images/trashcan.png" class="fa-solid fa-trash-can delete-icon"></i>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Trần Bảo Trân</td>
+                                <td><span class="role-tag female-role">Nữ</span></td>
+                                <td>2005</td>
+                                <td>Tân Thủy, Lệ Thủy, Quảng Bình</td>
+                                <td class="patient-actions">
+                                    <button class="btn btn-add">Thêm</button>
+                                    <i></i><img src="./images/note.png" class="fa-solid fa-pen-to-square edit-icon"></i>
+                                    <i></i><img src="./images/trashcan.png" class="fa-solid fa-trash-can delete-icon"></i>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td>Dương Quốc Nhựt</td>
+                                <td><span class="role-tag male-role">Nam</span></td>
+                                <td>2005</td>
+                                <td>Tân Thủy, Lệ Thủy, Quảng Bình</td>
+                                <td class="patient-actions">
+                                    <button class="btn btn-add">Thêm</button>
+                                    <i></i><img src="./images/note.png" class="fa-solid fa-pen-to-square edit-icon"></i>
+                                    <i></i><img src="./images/trashcan.png" class="fa-solid fa-trash-can delete-icon"></i>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td>Phạm Nguyên Tường</td>
+                                <td><span class="role-tag male-role">Nam</span></td>
+                                <td>2005</td>
+                                <td>Tân Thủy, Lệ Thủy, Quảng Bình</td>
+                                <td class="patient-actions">
+                                    <button class="btn btn-add">Thêm</button>
+                                    <i></i><img src="./images/note.png" class="fa-solid fa-pen-to-square edit-icon"></i>
+                                    <i></i><img src="./images/trashcan.png" class="fa-solid fa-trash-can delete-icon"></i>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>6</td>
+                                <td>Nguyễn Lâm Bảo Phúc</td>
+                                <td><span class="role-tag male-role">Nam</span></td>
+                                <td>2005</td>
+                                <td>Tân Thủy, Lệ Thủy, Quảng Bình</td>
+                                <td class="patient-actions">
+                                    <button class="btn btn-add">Thêm</button>
+                                    <i></i><img src="./images/note.png" class="fa-solid fa-pen-to-square edit-icon"></i>
+                                    <i></i><img src="./images/trashcan.png" class="fa-solid fa-trash-can delete-icon"></i>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="pagination">
+                <span>1 - 6 trong tổng số 60</span>
+                <div class="pagination-controls">
+                    <button class="pagination-btn"><img src="./images/larrow2.png" alt="Previous"></button>
+                    <button class="pagination-btn"><img src="./images/arrow2.png" alt="Next"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

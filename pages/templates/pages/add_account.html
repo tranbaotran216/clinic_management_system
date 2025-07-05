@@ -1,0 +1,191 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Tài Khoản - Thêm Tài Khoản</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV6F" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Sửa đường dẫn CSS -->
+    <link rel="stylesheet" href="{% static 'pages/style.css' %}">
+</head>
+<body class="add-account-page">
+    <div class="main-content-wrapper">
+        <div class="top-page-layout">
+            <div class="breadcrumb">
+                <!-- Sửa liên kết và ảnh -->
+                <a href="{% url 'pages:admin_dashboard' %}"><img src="{% static 'pages/images/home.png' %}" class="breadcrumb-icon"></a>
+                <img src="{% static 'pages/images/arrow.png' %}" class="breadcrumb-arrow">
+                <a href="{% url 'pages:account_management' %}">Quản lý tài khoản</a>
+                <img src="{% static 'pages/images/arrow.png' %}" class="breadcrumb-arrow"> <span>Thêm tài khoản</span>
+            </div>
+
+            <div class="header-action-button">
+                <!-- Nút Đóng sẽ điều hướng về trang quản lý tài khoản -->
+                <button class="btn btn-close-page" onclick="window.location.href='{% url 'pages:account_management' %}'">
+                    <i class="fa-solid fa-xmark"></i> Đóng
+                </button>
+            </div>
+        </div>
+
+        <div class="add-account-card">
+            <!-- Thêm id cho form để JS bắt sự kiện -->
+            <form id="addAccountForm" method="POST" class="add-account-form">
+                {% csrf_token %} <!-- Thêm CSRF Token -->
+                
+                <div class="form-grid-layout">
+                    <div class="form-column">
+                        <div class="form-group">
+                            <label for="ho_ten">Họ và tên <span class="required">*</span></label>
+                            <input type="text" id="ho_ten" name="ho_ten" placeholder="Nhập họ và tên" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="groups">Vai trò <span class="required">*</span></label>
+                            <!-- Thêm id cho thẻ select để JS điền dữ liệu vào -->
+                            <select id="groups" name="groups" required>
+                                <option value="">Đang tải vai trò...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email <span class="required">*</span></label>
+                            <input type="email" id="email" name="email" placeholder="Nhập địa chỉ email" required>
+                        </div>
+                    </div>
+
+                    <div class="form-column">
+                        <div class="form-group">
+                            <label for="ten_dang_nhap">Tên đăng nhập <span class="required">*</span></label>
+                            <input type="text" id="ten_dang_nhap" name="ten_dang_nhap" placeholder="Nhập tên đăng nhập" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Mật khẩu <span class="required">*</span></label>
+                            <input type="password" id="password" name="password" placeholder="Nhập mật khẩu" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password2">Xác nhận mật khẩu <span class="required">*</span></label>
+                            <input type="password" id="password2" name="password2" placeholder="Nhập lại mật khẩu" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Div để hiển thị thông báo thành công hoặc lỗi -->
+                <div id="formMessage" style="margin-bottom: 15px; text-align: center; font-weight: 600;"></div>
+
+                <div class="form-actions">
+                    <!-- Nút Hủy cũng điều hướng về trang quản lý tài khoản -->
+                    <button type="button" class="btn btn-secondary-cancel" onclick="window.location.href='{% url 'pages:account_management' %}'">
+                        <i class="fa-solid fa-xmark"></i> Hủy
+                    </button>
+                    <button type="reset" class="btn btn-tertiary-reset">
+                        <i class="fa-solid fa-arrow-rotate-right"></i> Nhập lại
+                    </button>
+                    <button type="submit" class="btn btn-primary-save">
+                        <i class="fa-solid fa-floppy-disk"></i> Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- === SCRIPT ĐỂ LẤY VAI TRÒ VÀ GỬI FORM === -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const accessToken = localStorage.getItem('accessToken');
+            if (!accessToken) {
+                window.location.href = "{% url 'pages:login' %}";
+                return;
+            }
+
+            const roleSelect = document.getElementById('groups');
+            const addAccountForm = document.getElementById('addAccountForm');
+            const formMessage = document.getElementById('formMessage');
+
+            // --- 1. LẤY DANH SÁCH VAI TRÒ (GROUPS) TỪ API ---
+            async function fetchRoles() {
+                try {
+                    const response = await fetch('/api/groups/', {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    });
+                    if (response.ok) {
+                        const groups = await response.json();
+                        roleSelect.innerHTML = '<option value="">Chọn vai trò</option>'; // Xóa "Đang tải..."
+                        groups.forEach(group => {
+                            const option = `<option value="${group.id}">${group.name}</option>`;
+                            roleSelect.insertAdjacentHTML('beforeend', option);
+                        });
+                    } else {
+                        roleSelect.innerHTML = '<option value="">Lỗi tải vai trò</option>';
+                    }
+                } catch (error) {
+                    console.error("Lỗi khi lấy vai trò:", error);
+                    roleSelect.innerHTML = '<option value="">Lỗi kết nối</option>';
+                }
+            }
+
+            fetchRoles();
+
+            // --- 2. XỬ LÝ SỰ KIỆN SUBMIT FORM ---
+            addAccountForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                formMessage.textContent = '';
+                formMessage.style.color = 'black';
+
+                // Thu thập dữ liệu từ form
+                const formData = new FormData(addAccountForm);
+                const data = {
+                    ho_ten: formData.get('ho_ten'),
+                    email: formData.get('email'),
+                    ten_dang_nhap: formData.get('ten_dang_nhap'),
+                    password: formData.get('password'),
+                    password2: formData.get('password2'),
+                    // API yêu cầu `groups` là một mảng các ID
+                    groups: [formData.get('groups')] 
+                };
+                
+                try {
+                    const response = await fetch('/api/users/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                            'Authorization': `Bearer ${accessToken}`
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const responseData = await response.json();
+
+                    if (response.ok) {
+                        formMessage.textContent = 'Thêm tài khoản thành công! Tự động chuyển trang...';
+                        formMessage.style.color = 'green';
+                        // Reset form
+                        addAccountForm.reset();
+                        // Chờ 2 giây rồi chuyển về trang quản lý
+                        setTimeout(() => {
+                            window.location.href = "{% url 'pages:account_management' %}";
+                        }, 2000);
+
+                    } else {
+                        // Hiển thị lỗi từ server
+                        let errorMessage = 'Đã có lỗi xảy ra. Vui lòng kiểm tra lại thông tin.';
+                        // Gộp các lỗi lại thành một chuỗi
+                        if (typeof responseData === 'object') {
+                            errorMessage = Object.keys(responseData).map(key => {
+                                return `${key}: ${responseData[key].join(', ')}`;
+                            }).join('\n');
+                        }
+                        formMessage.textContent = errorMessage;
+                        formMessage.style.color = 'red';
+                    }
+
+                } catch (error) {
+                    console.error('Lỗi khi thêm tài khoản:', error);
+                    formMessage.textContent = 'Lỗi kết nối đến server.';
+                    formMessage.style.color = 'red';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
