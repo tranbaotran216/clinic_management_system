@@ -111,3 +111,13 @@ def edit_account_view(request, account_id):
     """
     # Chúng ta có thể truyền account_id vào template để JavaScript xử lý.
     return render(request, 'pages/edit_account.html', {'account_id': account_id})
+
+def appointment_management_view(request):
+
+    return render(request, 'pages/examination_list.html')
+
+def staff_dashboard_view(request):
+    """
+    View này sẽ render trang dashboard của nhân viên y tế (staff_dashboard.html).
+    """
+    return render(request, 'pages/staff_dashboard.html')

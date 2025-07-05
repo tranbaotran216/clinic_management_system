@@ -56,4 +56,10 @@ urlpatterns = [
     
     # Trang chỉnh sửa tài khoản
     path('admin/accounts/edit/<int:account_id>/', views.edit_account_view, name='edit_account'),
+    
+    # Trang danh sách khám bệnh
+    path('admin/appointments/', views.appointment_management_view, name='examination_list'),
+    
+    # Trang dashboard nhân viên y tế
+    path('staff/dashboard/', views.staff_dashboard_view, name='staff_dashboard'),
 ]
