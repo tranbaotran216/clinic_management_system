@@ -284,3 +284,33 @@ class RevenueReportView(drf_views.APIView):
             })
         serializer = BaoCaoDoanhThuNgaySerializer(report_data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+# ===================================================================
+# accounts/views.py
+from django.shortcuts import render
+
+# ... (các import và view API cũ của bạn vẫn giữ nguyên) ...
+
+# === VIEWS ĐỂ PHỤC VỤ CÁC TRANG HTML ===
+
+def login_page_view(request):
+    """View để hiển thị trang đăng nhập."""
+    return render(request, 'accounts/login.html')
+
+def index_page_view(request):
+    """View để hiển thị trang chủ."""
+    return render(request, 'accounts/index.html')
+
+def account_management_view(request):
+    """View để hiển thị trang quản lý tài khoản."""
+    # Bạn có thể truyền dữ liệu từ database vào đây
+    # users = TaiKhoan.objects.all()
+    # context = {'users': users}
+    # return render(request, 'accounts/account_management.html', context)
+    return render(request, 'accounts/account_management.html')
+
+def about_page_view(request):
+    """View để hiển thị trang giới thiệu."""
+    return render(request, 'accounts/about.html')
+# ... Tạo các hàm tương tự cho các trang .html khác ...
+# add_account_view, add_drugs_view, v.v...

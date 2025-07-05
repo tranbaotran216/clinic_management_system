@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dịch vụ của chúng tôi - Medical Clinic</title>
+    <!-- SỬA LỖI 1: Thêm 'pages/' vào đường dẫn static -->
+    <link rel="stylesheet" href="{% static 'pages/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container navbar">
+            <div class="logo">
+                <!-- SỬA LỖI 1: Thêm 'pages/' vào đường dẫn static -->
+                <img src="{% static 'pages/images/plus_sign.png' %}" alt="Medical Clinic Logo">
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="{% url 'pages:index' %}">Trang chủ</a></li>
+                    <li><a href="{% url 'pages:services' %}" class="active">Dịch vụ</a></li>
+                    <li><a href="{% url 'pages:about' %}">Giới thiệu</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons">
+                <a href="{% url 'pages:login' %}" class="btn btn-login">Đăng nhập</a>
+                <button class="btn btn-register">Đăng ký khám bệnh</button>
+            </div>
+        </div>
+    </header>
+
+    <section class="page-title-section">
+        <div class="container">
+            <h2>Dịch vụ</h2>
+        </div>
+    </section>
+
+    <section class="services-content-wrapper">
+        <div class="container services-container">
+            <button class="nav-arrow left-arrow">
+                <!-- SỬA LỖI 1: Thêm 'pages/' -->
+                <img src="{% static 'pages/images/back.png' %}" alt="Previous">
+            </button>
+
+            <div class="service-grid">
+                <div class="service-card">
+                    <div class="service-image-wrapper">
+                        <!-- SỬA LỖI 1: Thêm 'pages/' -->
+                        <img src="{% static 'pages/images/xetnghiemmau.png' %}" alt="Xét nghiệm máu icon">
+                    </div>
+                    <h3>Xét nghiệm máu</h3>
+                    <p>Đánh giá sức khỏe tổng quát, phát hiện sớm các bệnh lý như thiếu máu, tiểu đường, nhiễm trùng, mỡ máu,...</p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-image-wrapper">
+                        <!-- SỬA LỖI 1: Thêm 'pages/' -->
+                        <img src="{% static 'pages/images/captoathuoc.png' %}" alt="Đo huyết áp và nhịp tim icon">
+                    </div>
+                    <h3>Đo huyết áp và nhịp tim</h3>
+                    <p>Theo dõi các chỉ số tim mạch, hỗ trợ phát hiện sớm các bất thường về huyết áp hoặc rối loạn nhịp tim.</p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-image-wrapper">
+                        <!-- SỬA LỖI 1: Thêm 'pages/' -->
+                        <img src="{% static 'pages/images/dohuyetap.png' %}" alt="Cấp toa thuốc định kỳ icon">
+                    </div>
+                    <h3>Cấp toa thuốc định kỳ</h3>
+                    <p>Hỗ trợ cấp lại đơn thuốc cho bệnh nhân mắc các bệnh mãn tính như tăng huyết áp, tiểu đường, viêm khớp.</p>
+                </div>
+
+            </div>
+
+            <button class="nav-arrow right-arrow">
+                <!-- SỬA LỖI 1: Thêm 'pages/' -->
+                <img src="{% static 'pages/images/next.png' %}" alt="Next">
+            </button>
+        </div>
+    </section>
+
+</body>
+</html>

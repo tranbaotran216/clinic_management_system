@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Tài Khoản - Phòng Khám</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Sửa đường dẫn CSS -->
+    <link rel="stylesheet" href="{% static 'pages/style.css' %}">
+</head>
+<body class="account-management-page">
+    <div class="account-management-container">
+        <div class="top-page-layout">
+            <div class="breadcrumb">
+                <!-- Sửa liên kết và ảnh -->
+                <a href="{% url 'pages:admin_dashboard' %}"><img src="{% static 'pages/images/home.png' %}" class="breadcrumb-icon"></a>
+                <img src="{% static 'pages/images/arrow.png' %}" class="breadcrumb-arrow"> <span>Quản lý tài khoản</span>
+            </div>
+
+            <div class="header-section">
+                <!-- ĐÃ SỬA LỖI Ở ĐÂY -->
+                <button class="btn btn-primary" onclick="window.location.href='{% url 'pages:add_account' %}'">
+                    <i class="fa-solid fa-plus"></i> Thêm tài khoản
+                </button>
+            </div>
+        </div>
+
+        <div class="account-management-card">
+            <div class="table-controls">
+                <div class="filter-sort-group">
+                    <div class="control-item">
+                        <span class="label">Lọc</span>
+                        <img src="{% static 'pages/images/sort.png' %}" class="fa-solid fa-filter">
+                    </div>
+                    <div class="control-item">
+                        <span class="label">Sắp xếp</span>
+                        <img src="{% static 'pages/images/downarrow2.png' %}" class="fa-solid fa-arrows-up-down">
+                    </div>
+                </div>
+                <div class="search-box">
+                    <input type="text" placeholder="Tra cứu">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+            </div>
+            <div class="scrollable-table-wrapper">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Họ và tên</th>
+                                <th>Vai trò</th>
+                                <th>Email</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <!-- Thêm ID cho tbody để JS có thể chèn dữ liệu vào -->
+                        <tbody id="userTableBody">
+                            <!-- Dữ liệu người dùng sẽ được chèn vào đây bằng JavaScript -->
+                            <!-- Dòng dưới đây chỉ để làm mẫu, sẽ bị xóa bởi script -->
+                            <tr>
+                                <td colspan="5" style="text-align: center;">Đang tải dữ liệu...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="pagination">
+                <span id="paginationInfo"></span>
+                <div class="pagination-controls">
+                    <button class="pagination-btn"><img src="{% static 'pages/images/larrow2.png' %}" class="fa-solid fa-chevron-left"></button>
+                    <button class="pagination-btn"><img src="{% static 'pages/images/arrow2.png' %}" class="fa-solid fa-chevron-right"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === SCRIPT ĐỂ LẤY VÀ HIỂN THỊ DANH SÁCH USER === -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const accessToken = localStorage.getItem('accessToken');
+            if (!accessToken) {
+                // Nếu chưa đăng nhập, đá về trang login
+                window.location.href = "{% url 'pages:login' %}";
+                return;
+            }
+
+            const userTableBody = document.getElementById('userTableBody');
+
+            async function fetchUsers() {
+                try {
+                    const response = await fetch('/api/users/', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const users = await response.json();
+                        renderUserTable(users);
+                    } else if (response.status === 401) {
+                        // Token hết hạn
+                        window.location.href = "{% url 'pages:login' %}";
+                    } else {
+                        userTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Lỗi khi tải dữ liệu.</td></tr>`;
+                    }
+                } catch (error) {
+                    console.error("Lỗi mạng:", error);
+                    userTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Lỗi kết nối mạng.</td></tr>`;
+                }
+            }
+
+            function renderUserTable(users) {
+                // Xóa nội dung "Đang tải..."
+                userTableBody.innerHTML = '';
+
+                if (users.length === 0) {
+                    userTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Không có tài khoản nào.</td></tr>`;
+                    return;
+                }
+
+                users.forEach((user, index) => {
+                    // Lấy ra tên các vai trò
+                    const roles = user.groups.map(group => group.name).join(', ');
+                    let roleTagClass = 'staff-role'; // Mặc định
+                    if (roles.includes('Quản lý')) {
+                        roleTagClass = 'admin-role';
+                    }
+
+                     const editUrl = "{% url 'pages:edit_account' 0 %}".replace('/0/', `/${user.id}/`);
+
+                    const row = `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${user.ho_ten || 'N/A'}</td>
+                            <td><span class="role-tag ${roleTagClass}">${roles || 'Chưa có vai trò'}</span></td>
+                            <td>${user.email || 'N/A'}</td>
+                            <td class="actions">
+                                <i class="fa-solid fa-user-circle" title="Xem chi tiết"></i>
+                                <!-- SỬA LẠI NÚT SỬA -->
+                                <a href="${editUrl}">
+                                    <i class="fa-solid fa-pen-to-square" title="Chỉnh sửa"></i>
+                                </a>
+                                <i class="fa-solid fa-trash-can" title="Xóa" data-id="${user.id}"></i>
+                            </td>
+                        </tr>
+                    `;
+                    userTableBody.insertAdjacentHTML('beforeend', row);
+                });
+                // Cập nhật thông tin phân trang (ví dụ đơn giản)
+                document.getElementById('paginationInfo').textContent = `1 - ${users.length} trong tổng số ${users.length}`;
+            }
+
+            fetchUsers();
+        });
+    </script>
+</body>
+</html>

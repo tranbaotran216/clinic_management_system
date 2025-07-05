@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Tài Khoản - Phòng Khám</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="./style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="account-management-page">
+    <div class="account-management-container">
+        <div class="top-page-layout">
+            <div class="breadcrumb">
+                <a href="#"><img src="./images/home.png" class="breadcrumb-icon"></a>
+                <img src="./images/arrow.png" class="breadcrumb-arrow"> <span>Quản lý tài khoản</span>
+            </div>
+
+            <div class="header-section">
+                <button class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i> Thêm tài khoản
+                </button>
+            </div>
+        </div>
+
+        <div class="account-management-card">
+            <div class="table-controls">
+                <div class="filter-sort-group">
+                    <div class="control-item">
+                        <span class="label">Lọc</span>
+                        <i class="fa-solid fa-filter"></i>
+                    </div>
+                    <div class="control-item">
+                        <span class="label">Sắp xếp</span>
+                        <i class="fa-solid fa-arrows-up-down"></i>
+                    </div>
+                </div>
+                <div class="search-box">
+                    <input type="text" placeholder="Tra cứu">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+            </div>
+            <div class="scrollable-table-wrapper">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Họ và tên</th>
+                                <th>Vai trò</th>
+                                <th>Email</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>Dương Thị Tú Yến</td>
+                                <td><span class="role-tag admin-role">Quản lý</span></td>
+                                <td>adminhao@medicalclinic.com</td>
+                                <td class="actions">
+                                    <i class="fa-solid fa-user-circle"></i>
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <i class="fa-solid fa-trash-can delete-icon"></i> </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>Nguyễn Mai Hảo</td>
+                                <td><span class="role-tag admin-role">Quản lý</span></td>
+                                <td>adminhao@medicalclinic.com</td>
+                                <td class="actions">
+                                    <i class="fa-solid fa-user-circle"></i>
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <i class="fa-solid fa-trash-can delete-icon"></i> </td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>Trần Bảo Trân</td>
+                                <td><span class="role-tag admin-role">Quản lý</span></td>
+                                <td>adminhao@medicalclinic.com</td>
+                                <td class="actions">
+                                    <i class="fa-solid fa-user-circle"></i>
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <i class="fa-solid fa-trash-can delete-icon"></i> </td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td>Dương Quốc Nhựt</td>
+                                <td><span class="role-tag staff-role">Nhân viên y tế</span></td>
+                                <td>adminhao@medicalclinic.com</td>
+                                <td class="actions">
+                                    <i class="fa-solid fa-user-circle"></i>
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <i class="fa-solid fa-trash-can delete-icon"></i> </td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td>Phạm Nguyên Tường</td>
+                                <td><span class="role-tag staff-role">Nhân viên y tế</span></td>
+                                <td>adminhao@medicalclinic.com</td>
+                                <td class="actions">
+                                    <i class="fa-solid fa-user-circle"></i>
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <i class="fa-solid fa-trash-can delete-icon"></i> </td>
+                            </tr>
+                            <tr>
+                                <td>6</td>
+                                <td>Nguyễn Lâm Bảo Phúc</td>
+                                <td><span class="role-tag staff-role">Nhân viên y tế</span></td>
+                                <td>adminhao@medicalclinic.com</td>
+                                <td class="actions">
+                                    <i class="fa-solid fa-user-circle"></i>
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <i class="fa-solid fa-trash-can delete-icon"></i> </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="pagination">
+                <span>1 - 6 trong tổng số 40</span>
+                <div class="pagination-controls">
+                    <button class="pagination-btn"><i class="fa-solid fa-chevron-left"></i></button>
+                    <button class="pagination-btn"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="delete-modal-overlay">
+        <div class="delete-account-card delete-modal-content">
+            <div class="card-title">Xóa tài khoản</div>
+            <form action="#" method="POST" class="delete-account-form">
+                <div class="delete-warning-icon">
+                    <img src="./images/Warning.png" alt="Cảnh báo">
+                    </div>
+                <p class="warning-message">Bạn có chắc chắn muốn xóa tài khoản này không? Thao tác này sẽ không thể hoàn tác.</p>
+
+                <div class="user-details-display">
+                    <div class="detail-row">
+                        <span class="detail-label">Họ và tên:</span>
+                        <span class="detail-value" id="modal-fullname"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Vai trò:</span>
+                        <span class="detail-value" id="modal-role"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value" id="modal-email"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">User:</span>
+                        <span class="detail-value" id="modal-username"></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Trạng thái:</span>
+                        <span class="detail-value" id="modal-status"></span>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary-cancel modal-cancel-btn">
+                        <i class="fa-solid fa-xmark"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-danger-delete">
+                        <i class="fa-solid fa-trash-can"></i> Xóa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const deleteIcons = document.querySelectorAll('.delete-icon');
+        const deleteModalOverlay = document.querySelector('.delete-modal-overlay');
+        const modalCancelBtn = document.querySelector('.modal-cancel-btn');
+
+        deleteIcons.forEach(icon => {
+            icon.addEventListener('click', () => {
+                deleteModalOverlay.style.display = 'flex';
+
+                const row = icon.closest('tr');
+                const fullname = row.cells[1].textContent;
+                const roleElement = row.cells[2].querySelector('.role-tag');
+                const role = roleElement ? roleElement.textContent : ''; 
+                const email = row.cells[3].textContent;
+
+                const username = "nguyenvana"; 
+                const status = "Hoạt động"; 
+
+                document.getElementById('modal-fullname').textContent = fullname;
+                document.getElementById('modal-role').textContent = role;
+                document.getElementById('modal-email').textContent = email;
+                document.getElementById('modal-username').textContent = username;
+                document.getElementById('modal-status').textContent = status;
+                document.getElementById('modal-status').className = 'detail-value ' + (status === 'Hoạt động' ? 'status-active' : 'status-inactive');
+            });
+        });
+
+        modalCancelBtn.addEventListener('click', () => {
+            deleteModalOverlay.style.display = 'none';
+        });
+
+        deleteModalOverlay.addEventListener('click', (event) => {
+            if (event.target === deleteModalOverlay) {
+                deleteModalOverlay.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
