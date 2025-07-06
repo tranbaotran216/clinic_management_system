@@ -1,16 +1,11 @@
-# accounts/serializers.py (PHIÊN BẢN HOÀN CHỈNH)
-
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Group as DjangoGroup, Permission as DjangoPermission
 from .models import (
     TaiKhoan, BenhNhan, DSKham, PKB, ChiTietPKB,
     LoaiBenh, Thuoc, DonViTinh, HoaDon, CachDung, QuyDinhValue, get_so_benh_nhan_toi_da
 )
-
-# ===================================================================
-# == SERIALIZERS HỆ THỐNG & TÀI KHOẢN (Đã ổn định, giữ nguyên)
-# ===================================================================
 
 class PermissionSerializer(serializers.ModelSerializer):
     full_codename = serializers.SerializerMethodField()
@@ -40,54 +35,119 @@ class TaiKhoanPublicSerializer(serializers.ModelSerializer):
     def get_permissions(self, obj: TaiKhoan) -> list:
         return sorted(list(obj.get_all_permissions()))
 
+# ===================================================================
+# == SỬA ĐỔI TẠI ĐÂY: TaiKhoanCreateSerializer
+# ===================================================================
 class TaiKhoanCreateSerializer(serializers.ModelSerializer):
-    # ... (Giữ nguyên không thay đổi)
-    password2 = serializers.CharField(write_only=True, style={'input_type': 'password'})
+    password2 = serializers.CharField(write_only=True, style={'input_type': 'password'}, label="Xác nhận mật khẩu")
     groups = serializers.PrimaryKeyRelatedField(queryset=DjangoGroup.objects.all(), many=True, required=False, allow_empty=True)
+
     class Meta:
         model = TaiKhoan
         fields = ['ho_ten', 'email', 'password', 'password2', 'ten_dang_nhap', 'groups', 'is_active', 'is_staff']
         extra_kwargs = {
-            'password': {'write_only': True, 'validators': [validate_password]},
+            'password': {'write_only': True},
+            'ho_ten': {'error_messages': {'blank': 'Họ tên không được để trống.'}},
+            'email': {'error_messages': {'blank': 'Email không được để trống.', 'invalid': 'Địa chỉ email không hợp lệ.'}},
+            'ten_dang_nhap': {'error_messages': {'blank': 'Tên đăng nhập không được để trống.'}},
             'is_active': {'required': False, 'default': True},
             'is_staff': {'required': False, 'default': False},
         }
+
     def validate(self, data):
-        if data.get('password') != data.get('password2'): raise serializers.ValidationError({"password": "Mật khẩu không khớp."})
+        password = data.get('password')
+        password2 = data.get('password2')
+
+        if password != password2:
+            raise serializers.ValidationError({"password2": "Mật khẩu xác nhận không khớp."})
+
+        try:
+            validate_password(password, data.get('ten_dang_nhap'))
+        except ValidationError as e:
+            error_messages = []
+            for error in e.messages:
+                if 'too short' in error:
+                    error_messages.append('Mật khẩu quá ngắn. Phải chứa ít nhất 8 ký tự.')
+                elif 'too common' in error:
+                    error_messages.append('Mật khẩu này quá phổ biến.')
+                elif 'entirely numeric' in error:
+                    error_messages.append('Mật khẩu không được chỉ chứa các ký tự số.')
+                elif 'similar to' in error:
+                    error_messages.append('Mật khẩu quá giống với thông tin cá nhân.')
+                else:
+                    error_messages.append(error)
+            raise serializers.ValidationError({'password': error_messages})
+        
         return data
+
     def create(self, validated_data):
         groups_data = validated_data.pop('groups', [])
         validated_data.pop('password2')
         user = TaiKhoan.objects.create_user(**validated_data)
-        if groups_data: user.groups.set(groups_data)
+        if groups_data:
+            user.groups.set(groups_data)
         return user
 
+# ===================================================================
+# == SỬA ĐỔI TẠI ĐÂY: TaiKhoanUpdateSerializer
+# ===================================================================
 class TaiKhoanUpdateSerializer(serializers.ModelSerializer):
-    # ... (Giữ nguyên không thay đổi)
     groups = serializers.PrimaryKeyRelatedField(queryset=DjangoGroup.objects.all(), many=True, required=False)
-    password = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True, validators=[validate_password])
-    password2 = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    password2 = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
     class Meta:
         model = TaiKhoan
         fields = ['id', 'ho_ten', 'email', 'groups', 'is_active', 'is_staff', 'password', 'password2', 'ten_dang_nhap']
         read_only_fields = ['ten_dang_nhap']
+
     def validate(self, attrs):
-        password = attrs.get('password'); password2 = attrs.get('password2')
+        password = attrs.get('password')
+        password2 = attrs.get('password2')
+
         if password or password2:
-            if password != password2: raise serializers.ValidationError({"password": "Mật khẩu không khớp."})
-            if not password: raise serializers.ValidationError({"password": "Mật khẩu không được để trống nếu muốn thay đổi."})
+            if not password:
+                raise serializers.ValidationError({"password": "Vui lòng nhập mật khẩu mới."})
+            if password != password2:
+                raise serializers.ValidationError({"password2": "Mật khẩu xác nhận không khớp."})
+            
+            try:
+                validate_password(password, self.instance)
+            except ValidationError as e:
+                error_messages = []
+                for error in e.messages:
+                    if 'too short' in error:
+                        error_messages.append('Mật khẩu quá ngắn. Phải chứa ít nhất 8 ký tự.')
+                    elif 'too common' in error:
+                        error_messages.append('Mật khẩu này quá phổ biến.')
+                    elif 'entirely numeric' in error:
+                        error_messages.append('Mật khẩu không được chỉ chứa các ký tự số.')
+                    elif 'similar to' in error:
+                        error_messages.append('Mật khẩu quá giống với thông tin cá nhân.')
+                    else:
+                        error_messages.append(error)
+                raise serializers.ValidationError({'password': error_messages})
+        
         return attrs
+
     def update(self, instance, validated_data):
-        groups_data = validated_data.pop('groups', None); password = validated_data.pop('password', None)
-        validated_data.pop('password2', None); instance = super().update(instance, validated_data)
-        if groups_data is not None: instance.groups.set(groups_data)
-        if password: instance.set_password(password)
-        instance.save(); return instance
+        groups_data = validated_data.pop('groups', None)
+        password = validated_data.pop('password', None)
+        validated_data.pop('password2', None)
+        
+        instance = super().update(instance, validated_data)
+
+        if groups_data is not None:
+            instance.groups.set(groups_data)
+        if password:
+            instance.set_password(password)
+        
+        instance.save()
+        return instance
 
 # ===================================================================
-# == SERIALIZERS DANH MỤC (Đã ổn định, giữ nguyên)
+# == SERIALIZERS DANH MỤC
 # ===================================================================
-
 class LoaiBenhSerializer(serializers.ModelSerializer):
     class Meta: model = LoaiBenh; fields = '__all__'
 
@@ -100,112 +160,58 @@ class CachDungSerializer(serializers.ModelSerializer):
 class ThuocSerializer(serializers.ModelSerializer):
     don_vi_tinh = DonViTinhSerializer(read_only=True)
     don_vi_tinh_id = serializers.PrimaryKeyRelatedField(queryset=DonViTinh.objects.all(), source='don_vi_tinh', write_only=True)
-    class Meta: model = Thuoc; fields = ['id', 'ten_thuoc', 'don_vi_tinh_id', 'don_vi_tinh', 'so_luong_ton', 'don_gia']
     cach_dung_mac_dinh = CachDungSerializer(read_only=True)
-    cach_dung_mac_dinh_id = serializers.PrimaryKeyRelatedField(
-        queryset=CachDung.objects.all(), 
-        source='cach_dung_mac_dinh', 
-        write_only=True, 
-        required=False, # Không bắt buộc
-        allow_null=True
-    )
+    cach_dung_mac_dinh_id = serializers.PrimaryKeyRelatedField(queryset=CachDung.objects.all(), source='cach_dung_mac_dinh', write_only=True, required=False, allow_null=True)
     class Meta:
         model = Thuoc
-        fields = [
-            'id', 
-            'ten_thuoc', 
-            'don_vi_tinh', 
-            'don_vi_tinh_id',
-            'so_luong_ton', 
-            'don_gia', 
-            'han_su_dung', 
-            'cach_dung_mac_dinh', 
-            'cach_dung_mac_dinh_id',
-        ]
+        fields = ['id', 'ten_thuoc', 'don_vi_tinh', 'don_vi_tinh_id', 'so_luong_ton', 'don_gia', 'han_su_dung', 'cach_dung_mac_dinh', 'cach_dung_mac_dinh_id']
+
 class QuyDinhValueSerializer(serializers.ModelSerializer):
     ma_quy_dinh_display = serializers.CharField(source='get_ma_quy_dinh_display', read_only=True)
     class Meta: model = QuyDinhValue; fields = ['ma_quy_dinh', 'ma_quy_dinh_display', 'gia_tri']
     
 class QuyDinhValueUpdateSerializer(serializers.ModelSerializer):
-    """Serializer này chỉ dùng để cập nhật giá trị của một quy định."""
-    class Meta:
-        model = QuyDinhValue
-        fields = ['gia_tri']
+    class Meta: model = QuyDinhValue; fields = ['gia_tri']
 
 # ===================================================================
-# == SERIALIZERS CHO NGHIỆP VỤ KHÁM BỆNH (PHẦN QUAN TRỌNG NHẤT)
+# == SERIALIZERS NGHIỆP VỤ KHÁM BỆNH
 # ===================================================================
-
-# --- Bệnh nhân ---
 class BenhNhanSerializer(serializers.ModelSerializer):
-    class Meta: 
-        model = BenhNhan
-        fields = ['id', 'ho_ten', 'dia_chi', 'nam_sinh', 'gioi_tinh']
+    class Meta: model = BenhNhan; fields = ['id', 'ho_ten', 'dia_chi', 'nam_sinh', 'gioi_tinh']
 
-# --- Danh sách chờ khám (DSKham) ---
-
-# Dùng để ĐỌC danh sách
 class DSKhamSerializer(serializers.ModelSerializer):
     benh_nhan = BenhNhanSerializer(read_only=True)
-    gioi_tinh_display = serializers.CharField(source='benh_nhan.get_gioi_tinh_display', read_only=True) # Để hiển thị "Nam", "Nữ"
+    gioi_tinh_display = serializers.CharField(source='benh_nhan.get_gioi_tinh_display', read_only=True)
     da_kham = serializers.SerializerMethodField()
+    class Meta: model = DSKham; fields = ['id', 'ngay_kham', 'benh_nhan', 'gioi_tinh_display', 'da_kham']
+    def get_da_kham(self, obj: DSKham) -> bool: return hasattr(obj, 'phieu_kham') and obj.phieu_kham is not None
     
-    class Meta: 
-        model = DSKham
-        fields = ['id', 'ngay_kham', 'benh_nhan', 'gioi_tinh_display', 'da_kham']
-
-    def get_da_kham(self, obj: DSKham) -> bool: 
-        return hasattr(obj, 'phieu_kham') and obj.phieu_kham is not None
-    
-# Dùng để TẠO MỚI một lượt đăng ký
 class DSKhamCreateSerializer(serializers.ModelSerializer):
-    benh_nhan = BenhNhanSerializer(write_only=True) 
- 
-    class Meta:
-        model = DSKham
-        fields = ['ngay_kham', 'benh_nhan']
-
+    benh_nhan = BenhNhanSerializer(write_only=True)
+    class Meta: model = DSKham; fields = ['ngay_kham', 'benh_nhan']
     def create(self, validated_data):
         benh_nhan_data = validated_data.pop('benh_nhan')
-        # Dùng get_or_create để không tạo bệnh nhân trùng
         benh_nhan_instance, _ = BenhNhan.objects.get_or_create(
             ho_ten=benh_nhan_data['ho_ten'],
             nam_sinh=benh_nhan_data['nam_sinh'],
             defaults={'gioi_tinh': benh_nhan_data['gioi_tinh'], 'dia_chi': benh_nhan_data.get('dia_chi', '')}
         )
-        ds_kham_instance = DSKham.objects.create(benh_nhan=benh_nhan_instance, **validated_data)
-        return ds_kham_instance
-    
+        return DSKham.objects.create(benh_nhan=benh_nhan_instance, **validated_data)
     def validate(self, data):
         ngay_kham = data.get('ngay_kham')
-        max_patients = get_so_benh_nhan_toi_da() # <-- Gọi hàm helper, code gọn hơn
-        current_patients = DSKham.objects.filter(ngay_kham=ngay_kham).count()
-
-        if current_patients >= max_patients:
-            raise serializers.ValidationError(...)
-            
+        if DSKham.objects.filter(ngay_kham=ngay_kham).count() >= get_so_benh_nhan_toi_da():
+            raise serializers.ValidationError({"ngay_kham": f"Ngày {ngay_kham.strftime('%d-%m-%Y')} đã đủ số lượng bệnh nhân."})
         return data
-# Dùng để CẬP NHẬT (SỬA) một lượt đăng ký
+
 class DSKhamUpdateSerializer(serializers.ModelSerializer):
-    benh_nhan = BenhNhanSerializer() # Nhận object bệnh nhân để cập nhật
-
-    class Meta:
-        model = DSKham
-        fields = ['id', 'ngay_kham', 'benh_nhan']
-
+    benh_nhan = BenhNhanSerializer()
+    class Meta: model = DSKham; fields = ['id', 'ngay_kham', 'benh_nhan']
     def update(self, instance, validated_data):
         benh_nhan_data = validated_data.pop('benh_nhan')
-        benh_nhan_instance = instance.benh_nhan
-        
-        # Cập nhật thông tin của bệnh nhân liên quan
-        benh_nhan_serializer = BenhNhanSerializer(benh_nhan_instance, data=benh_nhan_data, partial=True)
-        if benh_nhan_serializer.is_valid(raise_exception=True):
-            benh_nhan_serializer.save()
-
-        # Cập nhật thông tin của bản ghi DSKham (chỉ có ngay_kham)
+        benh_nhan_serializer = BenhNhanSerializer(instance.benh_nhan, data=benh_nhan_data, partial=True)
+        if benh_nhan_serializer.is_valid(raise_exception=True): benh_nhan_serializer.save()
         instance.ngay_kham = validated_data.get('ngay_kham', instance.ngay_kham)
         instance.save()
-
         return instance
     
 class PublicAppointmentSerializer(serializers.Serializer):
@@ -215,41 +221,18 @@ class PublicAppointmentSerializer(serializers.Serializer):
     dia_chi = serializers.CharField(max_length=255, allow_blank=True, required=False)
     ngay_kham = serializers.DateField()
     trieu_chung = serializers.CharField(allow_blank=True, required=False)
-
     def validate(self, data):
-        max_patients = get_so_benh_nhan_toi_da()
-        count = DSKham.objects.filter(ngay_kham=data['ngay_kham']).count()
-        if count >= max_patients:
+        if DSKham.objects.filter(ngay_kham=data['ngay_kham']).count() >= get_so_benh_nhan_toi_da():
             raise serializers.ValidationError("Đã đầy lịch khám trong ngày này.")
         return data
-
     def get_or_create_benh_nhan(self, validated_data):
         return BenhNhan.objects.get_or_create(
-            ho_ten=validated_data['ho_ten'],
-            nam_sinh=validated_data['nam_sinh'],
-            gioi_tinh=validated_data['gioi_tinh'],
+            ho_ten=validated_data['ho_ten'], nam_sinh=validated_data['nam_sinh'], gioi_tinh=validated_data['gioi_tinh'],
             defaults={'dia_chi': validated_data.get('dia_chi', '')}
         )
-
     def create(self, validated_data):
-        # 1. Tạo hoặc lấy bệnh nhân
         benh_nhan, _ = self.get_or_create_benh_nhan(validated_data)
-
-        # 2. Tạo lịch khám mới (chưa khám nên chưa tạo PKB)
-        lich_kham = DSKham.objects.create(
-            benh_nhan=benh_nhan,
-            ngay_kham=validated_data['ngay_kham']
-        )
-
-        # Nếu muốn lưu triệu chứng lại tạm thì có thể lưu vào `ghi_chu` của DSKham (nếu có)
-        # hoặc bỏ qua hoàn toàn nếu `PKB` mới là nơi lưu triệu chứng chính xác
-
-        return lich_kham
-
-
-
-
-# --- Phiếu Khám Bệnh (PKB) và các chi tiết (Giữ nguyên) ---
+        return DSKham.objects.create(benh_nhan=benh_nhan, ngay_kham=validated_data['ngay_kham'])
 
 class HoaDonSerializer(serializers.ModelSerializer):
     tong_tien = serializers.DecimalField(max_digits=12, decimal_places=0, read_only=True)
@@ -277,25 +260,21 @@ class PKBCreateUpdateSerializer(serializers.ModelSerializer):
     loai_benh_chuan_doan_id = serializers.PrimaryKeyRelatedField(queryset=LoaiBenh.objects.all(), source='loai_benh_chuan_doan', allow_null=True, required=False)
     chi_tiet_don_thuoc = ChiTietPKBWriteSerializer(many=True, write_only=True, required=False, allow_empty=True)
     class Meta: model = PKB; fields = ['ngay_kham', 'trieu_chung', 'benh_nhan_id', 'loai_benh_chuan_doan_id', 'chi_tiet_don_thuoc']
-
     def create(self, validated_data):
         chi_tiet_data_list = validated_data.pop('chi_tiet_don_thuoc', [])
         pkb = PKB.objects.create(**validated_data)
-        for chi_tiet_data in chi_tiet_data_list:
-            ChiTietPKB.objects.create(phieu_kham_benh=pkb, **chi_tiet_data)
+        for chi_tiet_data in chi_tiet_data_list: ChiTietPKB.objects.create(phieu_kham_benh=pkb, **chi_tiet_data)
         return pkb
-
     def update(self, instance, validated_data):
         chi_tiet_data_list = validated_data.pop('chi_tiet_don_thuoc', None)
         instance = super().update(instance, validated_data)
         if chi_tiet_data_list is not None:
             instance.chi_tiet_don_thuoc.all().delete()
-            for chi_tiet_data in chi_tiet_data_list:
-                ChiTietPKB.objects.create(phieu_kham_benh=instance, **chi_tiet_data)
+            for chi_tiet_data in chi_tiet_data_list: ChiTietPKB.objects.create(phieu_kham_benh=instance, **chi_tiet_data)
         return instance
 
 # ===================================================================
-# == SERIALIZERS BÁO CÁO (Đã ổn định, giữ nguyên)
+# == SERIALIZERS BÁO CÁO
 # ===================================================================
 class BaoCaoDoanhThuNgaySerializer(serializers.Serializer):
     ngay = serializers.DateField()
