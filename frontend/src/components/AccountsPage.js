@@ -198,7 +198,7 @@ const UserManagementTab = () => {
                     </Space>
                 </Col>
             </Row>
-            <Table columns={columns} dataSource={filteredUsers} loading={loading} rowKey="id" bordered scroll={{ x: 'max-content' }} />
+            <Table columns={columns} dataSource={filteredUsers} loading={loading} rowKey="id" bordered scroll={{ x: 'max-content' }} pagination={{ pageSize: 6 }}/>
             <Modal
                 title={editingUser ? `Sửa: ${editingUser.ten_dang_nhap}` : "Thêm người dùng"}
                 open={isModalVisible}
