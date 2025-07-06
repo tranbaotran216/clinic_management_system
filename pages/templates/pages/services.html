@@ -39,11 +39,11 @@
 
     <section class="services-content-wrapper">
         <div class="container services-container">
-            <button class="nav-arrow left-arrow">
+            <button class="nav-arrow left-arrow" onclick="scrollServices(-1)">
                 <img src="{% static 'pages/images/back.png' %}" alt="Previous">
             </button>
 
-            <div class="service-grid">
+            <div class="service-grid" id="serviceGrid">
                 <div class="service-card">
                     <div class="service-image-wrapper">
                         <img src="{% static 'pages/images/xetnghiemmau.png' %}" alt="Xét nghiệm máu icon">
@@ -54,8 +54,7 @@
 
                 <div class="service-card">
                     <div class="service-image-wrapper">
-                        <!-- Tên file ảnh này trong code gốc của bạn là dohuyetap.png, không phải captoathuoc.png -->
-                        <img src="{% static 'pages/images/dohuyetap.png' %}" alt="Đo huyết áp và nhịp tim icon">
+                        <img src="{% static 'pages/images/captoathuoc.png' %}" alt="Đo huyết áp và nhịp tim icon">
                     </div>
                     <h3>Đo huyết áp và nhịp tim</h3>
                     <p>Theo dõi các chỉ số tim mạch, hỗ trợ phát hiện sớm các bất thường về huyết áp hoặc rối loạn nhịp tim.</p>
@@ -63,20 +62,59 @@
 
                 <div class="service-card">
                     <div class="service-image-wrapper">
-                        <!-- Tên file ảnh này trong code gốc của bạn là captoathuoc.png -->
-                        <img src="{% static 'pages/images/captoathuoc.png' %}" alt="Cấp toa thuốc định kỳ icon">
+                        <img src="{% static 'pages/images/dohuyetap.png' %}" alt="Cấp toa thuốc định kỳ icon">
                     </div>
                     <h3>Cấp toa thuốc định kỳ</h3>
                     <p>Hỗ trợ cấp lại đơn thuốc cho bệnh nhân mắc các bệnh mãn tính như tăng huyết áp, tiểu đường, viêm khớp.</p>
                 </div>
 
-            </div>
+                <div class="service-card">
+                    <div class="service-image-wrapper">
+                        <img src="{% static 'pages/images/medicalcheckup.png' %}" alt="Khám tổng quát">
+                    </div>
+                    <h3>Khám tổng quát</h3>
+                    <p>Kiểm tra toàn diện sức khỏe, phát hiện sớm các vấn đề tiềm ẩn và tư vấn lối sống lành mạnh.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-image-wrapper">
+                        <img src="{% static 'pages/images/vaccination.png' %}" alt="Tiêm phòng">
+                    </div>
+                    <h3>Tiêm phòng</h3>
+                    <p>Cung cấp các loại vắc-xin cần thiết cho trẻ em và người lớn, giúp phòng ngừa bệnh truyền nhiễm.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-image-wrapper">
+                        <img src="{% static 'pages/images/nutritionplan.png' %}" alt="Tư vấn dinh dưỡng">
+                    </div>
+                    <h3>Tư vấn dinh dưỡng</h3>
+                    <p>Chuyên gia dinh dưỡng sẽ tư vấn chế độ ăn uống phù hợp với từng tình trạng sức khỏe và mục tiêu của bạn.</p>
+                </div>
+                </div>
 
-            <button class="nav-arrow right-arrow">
+            <button class="nav-arrow right-arrow" onclick="scrollServices(1)">
                 <img src="{% static 'pages/images/next.png' %}" alt="Next">
             </button>
         </div>
     </section>
+    <script>
+        const serviceGrid = document.getElementById('serviceGrid');
+        const scrollAmount = 3; 
 
+        function scrollServices(direction) {
+            const serviceCards = serviceGrid.querySelectorAll('.service-card');
+            const totalCards = serviceCards.length;
+            const currentScrollLeft = serviceGrid.scrollLeft;
+            const cardWidth = serviceCards.length > 0 ? serviceCards[0].offsetWidth + (parseFloat(window.getComputedStyle(serviceGrid).getPropertyValue('grid-gap')) || 0) : 0; 
+
+            const newScrollPosition = currentScrollLeft + (direction * cardWidth * scrollAmount);
+
+            const maxScrollLeft = serviceGrid.scrollWidth - serviceGrid.clientWidth;
+            
+            serviceGrid.scrollTo({
+                left: Math.max(0, Math.min(newScrollPosition, maxScrollLeft)),
+                behavior: 'smooth'
+            });
+        }
+    </script>
 </body>
 </html>

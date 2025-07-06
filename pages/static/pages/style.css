@@ -10,7 +10,7 @@ html, body {
     line-height: 1.6;
     color: #333;
     background-color: #e0eaff; 
-    background-image: url('./images/Background.png'); 
+    background-image: url('./images/homepage.gif'); 
     background-size: cover; 
     background-position: center; 
     background-repeat: no-repeat; 
@@ -82,6 +82,7 @@ body {
 
 .btn-login {
     background-color: transparent;
+    text-decoration: none;
     color: #007bff;
     border: 1px solid #007bff;
 }
@@ -92,6 +93,7 @@ body {
 
 .btn-register {
     background-color: #5FBDFF;
+    text-decoration: none;
     color: #FFFFFF;
 }
 
@@ -317,41 +319,41 @@ body {
 /* --- SERVICES PAGE--- */
 
 .page-title-section {
-    padding: 20px 0 20px 0; 
-    background-color: #fff; 
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03); 
+    padding: 20px 0 20px 0;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
     /* border-bottom: 1px solid #eee; */
 }
 
 .page-title-section h2 {
-    font-size: 2.2em; 
+    font-size: 2.2em;
     color: #2c3e50;
     font-weight: 400;
-    text-align: left; 
+    text-align: left;
 }
 
 .services-content-wrapper {
-    background-color: #fff; 
+    background-color: #fff;
     padding: 10px 0;
     display: flex;
-    justify-content: center; 
-    align-items: center; 
-    flex-grow: 1; 
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
 }
 
-.services-container { 
+.services-container {
     display: flex;
-    align-items: center; 
-    gap: 20px; 
-    max-width: 1200px; 
+    align-items: center;
+    gap: 20px;
+    max-width: 1300px;
     padding: 0 20px;
     margin: 0 auto;
 }
 
 .nav-arrow {
-    background-color: #e0f5ff; 
+    background-color: #e0f5ff;
     border: none;
-    border-radius: 50%; 
+    border-radius: 50%;
     width: 103px;
     height: 95px;
     display: flex;
@@ -360,7 +362,7 @@ body {
     cursor: pointer;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     transition: background-color 0.3s ease, transform 0.3s ease;
-    flex-shrink: 0; 
+    flex-shrink: 0;
 }
 
 .nav-arrow:hover {
@@ -369,31 +371,30 @@ body {
 }
 
 .nav-arrow img {
-    width: 60%; 
+    width: 60%;
     height: 60%;
     object-fit: contain;
 }
 
 .service-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 30px; 
-    flex-grow: 1; 
+    grid-auto-flow: column dense;
+    gap: 30px;
+    overflow-x: auto; 
+    scroll-snap-type: x mandatory; 
+    -webkit-overflow-scrolling: touch; 
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
 }
 
-.service-card {
-    background-color: #dcfbff; 
-    border-radius: 20px; 
-    padding: 30px; 
-    text-align: center; 
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08); 
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    display: flex; 
-    flex-direction: column;
-    align-items: center; 
-    justify-content: flex-start; 
-    height: auto; 
-    min-height: 350px; 
+.service-grid::-webkit-scrollbar {
+    display: none;
+}
+
+.service-grid .service-card {
+    flex-shrink: 0; 
+    scroll-snap-align: start; 
+    width: 310px; 
 }
 
 .service-card:hover {
@@ -402,19 +403,19 @@ body {
 }
 
 .service-image-wrapper {
-    background-color: #fff; 
-    border-radius: 20%; 
-    width: px; 
+    background-color: #fff;
+    border-radius: 20%;
+    width: 200px; 
     height: 200px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 0 auto 25px auto; 
-    flex-shrink: 0; 
+    margin: 0 auto 25px auto;
+    flex-shrink: 0;
 }
 
 .service-image-wrapper img {
-    max-width: 100%; 
+    max-width: 100%;
     max-height: 100%;
     object-fit: contain;
 }
@@ -430,16 +431,16 @@ body {
     font-size: 1em;
     color: #666;
     line-height: 1.3;
-    flex-grow: 1; 
+    flex-grow: 1;
 }
 
 @media (max-width: 992px) {
     .page-title-section h2 {
         font-size: 2.2em;
-        text-align: center; 
+        text-align: center;
     }
     .services-container {
-        flex-direction: column; 
+        flex-direction: column;
         gap: 15px;
     }
     .nav-arrow {
@@ -447,12 +448,12 @@ body {
         height: 40px;
     }
     .service-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 20px;
     }
     .service-card {
         padding: 20px;
-        min-height: 300px; 
+        min-height: 300px;
     }
     .service-image-wrapper {
         width: 100px;
@@ -475,7 +476,7 @@ body {
         padding: 30px 0;
     }
     .service-grid {
-        grid-template-columns: 1fr; 
+        grid-template-columns: 1fr;
     }
     .nav-arrow {
         display: none;
