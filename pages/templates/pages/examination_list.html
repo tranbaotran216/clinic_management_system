@@ -1,0 +1,208 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Khám Bệnh - Danh sách khám</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'pages/style.css' %}">
+</head>
+<body class="examination-list-page">
+    <div class="account-management-container">
+        <div class="top-page-layout">
+            <div class="breadcrumb">
+                <a href="{% url 'pages:admin_dashboard' %}"><img src="{% static 'pages/images/home.png' %}" class="breadcrumb-icon"></a>
+                <img src="{% static 'pages/images/arrow.png' %}" class="breadcrumb-arrow"> <a href="#">Quản lý khám bệnh</a>
+                <img src="{% static 'pages/images/arrow.png' %}" class="breadcrumb-arrow"> <span>Danh sách khám</span>
+            </div>
+
+            <div class="header-section">
+                <button class="btn btn-primary" onclick="window.location.href='{% url 'pages:register' %}'">
+                    <i class="fa-solid fa-plus"></i> Thêm bệnh nhân
+                </button>
+            </div>
+        </div>
+
+        <div class="account-management-card">
+            <div class="table-controls">
+                <div class="date-display">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <label for="dateFilter" style="margin: 0 5px 0 8px; font-weight: 500;">Ngày khám:</label>
+                    <input type="date" id="dateFilter" style="border: none; font-family: 'Montserrat', sans-serif; font-size: 1em;">
+                </div>
+                <div class="search-box">
+                    <input type="text" id="nameSearchInput" placeholder="Tra cứu theo tên bệnh nhân..." class="form-control search-input">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+            </div>
+            <div class="scrollable-table-wrapper">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Họ và tên</th>
+                                <th>Giới tính</th>
+                                <th>Năm sinh</th>
+                                <th>Địa chỉ</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="examinationTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center;">Vui lòng chọn ngày để xem danh sách.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="pagination">
+                <span id="paginationInfo"></span>
+                <!-- Bỏ qua pagination controls để đơn giản hóa, có thể thêm sau -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const accessToken = localStorage.getItem('accessToken');
+            if (!accessToken) {
+                window.location.href = "{% url 'pages:login' %}";
+                return;
+            }
+
+            const dateFilter = document.getElementById('dateFilter');
+            const tableBody = document.getElementById('examinationTableBody');
+            const paginationInfo = document.getElementById('paginationInfo');
+            
+            let fullList = []; // Lưu danh sách đầy đủ để lọc phía client
+
+            // --- HÀM LẤY DỮ LIỆU VÀ RENDER BẢNG ---
+            async function fetchAndRenderList(selectedDate) {
+                if (!selectedDate) {
+                    tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center;">Vui lòng chọn ngày để xem danh sách.</td></tr>`;
+                    paginationInfo.textContent = '';
+                    return;
+                }
+                
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center;">Đang tải...</td></tr>`;
+
+                try {
+                    const response = await fetch(`/api/ds-kham/?ngay_kham=${selectedDate}`, {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    });
+
+                    if (response.ok) {
+                        fullList = await response.json();
+                        renderTable(fullList); // Render toàn bộ danh sách ban đầu
+                    } else if (response.status === 401) {
+                        window.location.href = "{% url 'pages:login' %}";
+                    } else {
+                        tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red;">Lỗi khi tải danh sách.</td></tr>`;
+                    }
+                } catch (error) {
+                    console.error("Lỗi mạng:", error);
+                    tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red;">Lỗi kết nối mạng.</td></tr>`;
+                }
+            }
+
+            // --- HÀM RENDER BẢNG TỪ MỘT DANH SÁCH ---
+            function renderTable(listToRender) {
+                tableBody.innerHTML = ''; // Xóa nội dung cũ
+                if (listToRender.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center;">Không có bệnh nhân nào trong ngày này.</td></tr>`;
+                    paginationInfo.textContent = '0 kết quả';
+                } else {
+                    listToRender.forEach((item, index) => {
+                        const patient = item.benh_nhan;
+                        const hasMedicalRecord = item.da_kham;
+
+                        let actionButton;
+                        if (hasMedicalRecord) {
+                            actionButton = `<button class="btn btn-add" style="background-color: #28a745; cursor: default;" disabled>Đã khám</button>`;
+                        } else {
+                            // Cần tạo trang thêm phiếu khám và URL tương ứng
+                            actionButton = `<button class="btn btn-add" onclick="window.location.href='#'">Tạo PKB</button>`;
+                        }
+
+                        const row = `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${patient.ho_ten}</td>
+                                <td><span class="role-tag ${patient.gioi_tinh === 'F' ? 'female-role' : 'male-role'}">${item.gioi_tinh_display}</span></td>
+                                <td>${patient.nam_sinh}</td>
+                                <td>${patient.dia_chi || 'N/A'}</td>
+                                <td class="patient-actions">
+                                    ${actionButton}
+                                    <i class="fa-solid fa-pen-to-square edit-icon" title="Sửa thông tin đăng ký"></i>
+                                    <i class="fa-solid fa-trash-can delete-icon" title="Xóa khỏi danh sách" data-id="${item.id}"></i>
+                                </td>
+                            </tr>
+                        `;
+                        tableBody.insertAdjacentHTML('beforeend', row);
+                    });
+                    paginationInfo.textContent = `Hiển thị ${listToRender.length} kết quả`;
+                }
+            }
+            
+            // --- SỰ KIỆN VÀ KHỞI TẠO ---
+            // Set ngày mặc định là hôm nay
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0'); // Tháng từ 0-11, cần +1
+            const day = String(today.getDate()).padStart(2, '0');
+            const todayString = `${year}-${month}-${day}`;
+
+            dateFilter.value = todayString;
+            
+            // Tải danh sách cho ngày hôm nay ngay khi trang được mở
+            fetchAndRenderList(todayString);
+
+            // Lắng nghe sự kiện khi người dùng đổi ngày
+            dateFilter.addEventListener('change', function() {
+                document.getElementById('nameSearchInput').value = ''; // Reset ô tìm kiếm
+                fetchAndRenderList(this.value);
+            });
+
+            // Lắng nghe sự kiện khi người dùng gõ vào ô tìm kiếm
+            document.getElementById('nameSearchInput').addEventListener('input', function(event) {
+                const searchTerm = event.target.value.toLowerCase().trim();
+                const filteredList = fullList.filter(item => 
+                    item.benh_nhan.ho_ten.toLowerCase().includes(searchTerm)
+                );
+                renderTable(filteredList);
+            });
+
+            // Xử lý sự kiện xóa (sử dụng event delegation)
+            tableBody.addEventListener('click', async function(event) {
+                if (event.target.classList.contains('delete-icon')) {
+                    const registrationId = event.target.dataset.id;
+                    if (confirm(`Bạn có chắc chắn muốn xóa lượt đăng ký này khỏi danh sách không?`)) {
+                        try {
+                             const response = await fetch(`/api/ds-kham/${registrationId}/`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Authorization': `Bearer ${accessToken}`,
+                                    'X-CSRFToken': '{{ csrf_token }}' // Cần có token cho các request thay đổi dữ liệu
+                                }
+                            });
+                            if (response.status === 204) { // No Content - Xóa thành công
+                                alert('Xóa thành công!');
+                                fetchAndRenderList(dateFilter.value); // Tải lại danh sách
+                            } else {
+                                const errorData = await response.json();
+                                alert(`Xóa thất bại: ${errorData.detail || 'Lỗi không xác định.'}`);
+                            }
+                        } catch(error) {
+                            alert('Lỗi kết nối khi xóa.');
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

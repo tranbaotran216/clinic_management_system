@@ -71,15 +71,29 @@ const DashboardLayout = () => {
     return (
       // Layout cha chiếm toàn bộ chiều cao của viewport
       <Layout style={{ height: '100vh' }}>
-        <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed} theme="light">
-          <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Typography.Title level={4} style={{ margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', color: '#002140' }}>
+      <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed} theme="light">
+        <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* SỬ DỤNG THẺ <a> TRUYỀN THỐNG ĐỂ TẢI LẠI TRANG */}
+          <a href="/" style={{ textDecoration: 'none' }}>
+            <Typography.Title 
+              level={4} 
+              style={{ 
+                margin: 0, 
+                whiteSpace: 'nowrap', 
+                overflow: 'hidden', 
+                color: '#002140',
+                transition: 'color 0.3s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#1890ff'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#002140'}
+            >
               {collapsed ? 'PM' : 'Phòng Mạch XYZ'}
             </Typography.Title>
-          </div>
-          <Menu mode="inline" theme="light" selectedKeys={[currentKey]} items={menuItems} />
-        </Sider>
-        
+          </a>
+        </div>
+        <Menu mode="inline" theme="light" selectedKeys={[currentKey]} items={menuItems} />
+      </Sider>
+       
         {/* Layout bên phải được set thành flex container dọc */}
         <Layout style={{ display: 'flex', flexDirection: 'column' }}>
           <Header style={{ padding: '0 24px', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
@@ -111,3 +125,4 @@ const DashboardLayout = () => {
 };
 
 export default DashboardLayout;
+

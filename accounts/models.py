@@ -10,7 +10,7 @@ from decimal import Decimal, InvalidOperation # Import Decimal
 class GioiTinh(models.TextChoices):
     NAM = 'M', _('Nam')
     NU = 'F', _('Nữ')
-    KHAC = 'O', _('Khác')
+    # KHAC = 'O', _('Khác')
 
 # --- TaiKhoanManager ---
 class TaiKhoanManager(BaseUserManager):

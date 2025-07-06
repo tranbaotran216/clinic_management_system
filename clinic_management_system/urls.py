@@ -1,24 +1,26 @@
-"""
-URL configuration for clinic_management_system project.
+# clinic_management_system/urls.py
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from frontend.views import index as react_app_view # Import view của React
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # --- ƯU TIÊN 1: API ---
+    # Tất cả các request tới /api/... sẽ được xử lý bởi app 'accounts'.
     path('api/', include('accounts.urls')),
-    path('', include('frontend.urls')) # frontend/urls.py cùng cấp
+
+    # --- ƯU TIÊN 2: DJANGO ADMIN GỐC ---
+    # Request tới /admin/... sẽ vào trang admin mặc định của Django.
+    path('admin/', admin.site.urls),
+
+    # --- ƯU TIÊN 3: CÁC TRANG QUẢN TRỊ CỦA REACT ---
+    # Chúng ta bắt các URL cụ thể của dashboard và trỏ chúng về ứng dụng React.
+    # Dấu * ở cuối để bắt cả các URL con (ví dụ: /dashboard/accounts/add).
+    path('dashboard/', react_app_view, name='dashboard_base'), # Bắt /dashboard
+    path('dashboard/<path:subpath>', react_app_view), # Bắt tất cả các URL con của dashboard
+
+    # --- ƯU TIÊN 4: CÁC TRANG TĨNH CÔNG KHAI ---
+    # Tất cả các request còn lại sẽ được xử lý bởi app 'pages'.
+    # Dòng này phải đặt ở CUỐI CÙNG.
+    path('', include('pages.urls')),
 ]
