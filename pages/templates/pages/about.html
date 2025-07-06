@@ -16,15 +16,17 @@
             </div>
             <nav class="nav-menu">
                 <ul>
-                    <li><a href="{% url 'pages:index' %}">Trang chủ</a></li>
-                    <!-- ĐÃ SỬA LỖI Ở ĐÂY -->
-                    <li><a href="{% url 'pages:services' %}">Dịch vụ</a></li>
-                    <li><a href="{% url 'pages:about' %}" class="active">Giới thiệu</a></li>
+                    <!-- SỬA CÁC URL ĐỂ KHÔNG DÙNG NAMESPACE -->
+                    <li><a href="{% url 'home' %}">Trang chủ</a></li>
+                    <li><a href="{% url 'services' %}">Dịch vụ</a></li>
+                    <li><a href="{% url 'about' %}" class="active">Giới thiệu</a></li>
                 </ul>
             </nav>
             <div class="auth-buttons">
-                <a href="{% url 'pages:login' %}" class="btn btn-login">Đăng nhập</a>
-                <button class="btn btn-register">Đăng ký khám bệnh</button>
+                <!-- ================== SỬA LIÊN KẾT ĐẾN REACT ================== -->
+                <a href="/app/login" class="btn btn-login">Đăng nhập</a>
+                <a href="/app/register-appointment" class="btn btn-register">Đăng ký khám bệnh</a>
+                <!-- ============================================================= -->
             </div>
         </div>
     </header>

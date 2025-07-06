@@ -4,12 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medical Clinic</title>
+    <title>Medical Clinic - Trang chủ</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- SỬA ĐÚNG ĐƯỜNG DẪN CSS -->
+    <!-- Giữ nguyên đường dẫn CSS, Django sẽ tìm đúng file trong static/pages/style.css -->
     <link rel="stylesheet" href="{% static 'pages/style.css' %}">
 </head>
 <body>
@@ -17,21 +17,25 @@
     <header class="header">
         <div class="container navbar">
             <div class="logo">
-                <!-- SỬA ĐÚNG ĐƯỜNG DẪN ẢNH -->
                 <img src="{% static 'pages/images/plus_sign.png' %}" alt="Medical Clinic Logo">
             </div>
             <nav class="nav-menu">
                 <ul>
-                    <!-- SỬA ĐÚNG LIÊN KẾT TRANG -->
-                    <li><a href="{% url 'pages:index' %}" class="active">Trang chủ</a></li>
-                    <li><a href="{% url 'pages:services' %}">Dịch vụ</a></li>
-                    <li><a href="{% url 'pages:about' %}">Giới thiệu</a></li>
+                    <!-- Các link này vẫn do Django quản lý -->
+                    <li><a href="{% url 'home' %}" class="active">Trang chủ</a></li>
+                    <li><a href="{% url 'services' %}">Dịch vụ</a></li>
+                    <li><a href="{% url 'about' %}">Giới thiệu</a></li>
                 </ul>
             </nav>
             <div class="auth-buttons">
-                <!-- SỬA ĐÚNG LIÊN KẾT TRANG -->
-                <a href="{% url 'pages:login' %}" class="btn btn-login">Đăng nhập</a>
-                <a href="{% url 'pages:register' %}" class="btn btn-register">Đăng ký khám bệnh</a>
+                <!-- ================== THAY ĐỔI QUAN TRỌNG TẠI ĐÂY ================== -->
+                <!-- Nút "Đăng nhập" sẽ trỏ đến ứng dụng React -->
+                <a href="/app/login" class="btn btn-login">Đăng nhập</a>
+                
+                <!-- Nút "Đăng ký khám bệnh" cũng sẽ trỏ đến một trang trong React -->
+                <!-- Bạn cần tạo một component React cho trang này và định tuyến nó tại /app/register-appointment -->
+                <a href="/app/register-appointment" class="btn btn-register">Đăng ký khám bệnh</a>
+                <!-- ================================================================ -->
             </div>
         </div>
     </header>
@@ -40,28 +44,23 @@
         <div class="container main-content">
             <div class="text-content">
                 <p class="clinic-name">Medical Clinic</p>
-                <!-- Sửa lại tiêu đề cho khớp với code gốc -->
                 <h1>Chữa bệnh bằng tâm<br>Nâng tầm y đức</h1>
                 <div class="social-links">
                     <a href="#" class="social-item">
-                        <!-- SỬA ĐÚNG TÊN FILE ẢNH THEO CODE GỐC -->
                         <img src="{% static 'pages/images/fb icon.png' %}" alt="Facebook icon">
                         <span>Medical Clinic</span>
                     </a>
                     <a href="#" class="social-item">
-                        <!-- SỬA ĐÚNG TÊN FILE ẢNH THEO CODE GỐC -->
                         <img src="{% static 'pages/images/ig icon.png' %}" alt="Instagram icon">
                         <span>@medical_clinic</span>
                     </a>
                     <a href="#" class="social-item">
-                        <!-- SỬA ĐÚNG TÊN FILE ẢNH THEO CODE GỐC -->
                         <img src="{% static 'pages/images/phone icon.png' %}" alt="WhatsApp icon">
                         <span>+84 355 644 805</span>
                     </a>
                 </div>
             </div>
             <div class="image-content">
-                <!-- SỬA ĐÚNG TÊN FILE ẢNH THEO CODE GỐC -->
                 <img src="{% static 'pages/images/doctor_image.png' %}" alt="Doctor Illustration">
             </div>
         </div>
