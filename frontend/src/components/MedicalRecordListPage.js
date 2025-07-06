@@ -1,10 +1,8 @@
-// frontend/src/components/MedicalRecordListPage.js (Bản full đã tích hợp Hóa đơn và In)
-
 import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import {
-    Table, Button, Space, Modal, Tooltip, Typography, message, Spin, Row, Col, Card, Descriptions, Input
+    Table, Button, Space, Modal, Typography, message, Row, Col, Card, Descriptions, Input
 } from 'antd';
-import { EyeOutlined, EditOutlined, FileTextOutlined, ReloadOutlined, PrinterOutlined } from '@ant-design/icons';
+import { EyeOutlined, FileTextOutlined, ReloadOutlined, PrinterOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 import { AuthContext } from './App';
@@ -20,7 +18,6 @@ const getAuthHeaders = () => {
     return headers;
 };
 
-// Component con để hiển thị chi tiết PKB
 const PKBDetailView = ({ pkbData }) => {
     if (!pkbData) return null;
     return (
@@ -43,10 +40,9 @@ const PKBDetailView = ({ pkbData }) => {
                 ]}
             />
         </div>
-    )
+    );
 };
 
-// Component con chỉ để render nội dung hóa đơn cho việc in ấn
 const InvoiceContent = React.forwardRef(({ record }, ref) => {
     if (!record || !record.hoa_don_lien_ket) return null;
     const invoice = record.hoa_don_lien_ket;
@@ -85,8 +81,8 @@ const InvoiceContent = React.forwardRef(({ record }, ref) => {
                 <Descriptions.Item label={<Text strong>TỔNG CỘNG THANH TOÁN</Text>}><Text strong style={{ color: '#ff4d4f', fontSize: 16 }}>{new Intl.NumberFormat('vi-VN').format(invoice.tong_tien)} VND</Text></Descriptions.Item>
             </Descriptions>
             <div style={{ marginTop: 48, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
-                <div><Text strong>Người lập phiếu</Text><br />(Ký, ghi rõ họ tên)</div>
-                <div><Text strong>Người thanh toán</Text><br />(Ký, ghi rõ họ tên)</div>
+                <div><Text strong>Người lập phiếu</Text><br /><br /><br />(Ký, ghi rõ họ tên)</div>
+                <div><Text strong>Người thanh toán</Text><br /><br /><br />(Ký, ghi rõ họ tên)</div>
             </div>
         </div>
     );
@@ -105,11 +101,21 @@ const MedicalRecordListPage = () => {
 
     const handlePrint = useReactToPrint({
         content: () => invoiceContentRef.current,
-        documentTitle: () => `HoaDon-PKB${selectedRecord?.id}-${selectedRecord?.benh_nhan.ho_ten.replace(/\s/g, '')}`
+        documentTitle: `HoaDon-PKB${selectedRecord?.id}-${selectedRecord?.benh_nhan?.ho_ten.replace(/\s/g, '') || ''}`,
+        onBeforeGetContent: () => {
+            return new Promise((resolve) => {
+                message.loading({ content: 'Đang chuẩn bị file...', key: 'printing', duration: 0 });
+                setTimeout(() => {
+                    resolve();
+                }, 300); // Đợi một chút để đảm bảo DOM đã render xong
+            });
+        },
+        onAfterPrint: () => {
+            message.success({ content: 'Hoàn tất!', key: 'printing', duration: 2 });
+        },
     });
 
     const canView = currentUser?.permissions?.includes('accounts.view_pkb');
-    const canChange = currentUser?.permissions?.includes('accounts.change_pkb');
     const canViewInvoice = currentUser?.permissions?.includes('accounts.view_hoadon');
 
     const fetchData = async () => {
@@ -143,11 +149,6 @@ const MedicalRecordListPage = () => {
         setIsInvoiceModalVisible(false);
         setSelectedRecord(null);
     };
-    
-    const handleEditPKB = (pkbId) => {
-        message.info(`Chức năng sửa PKB #${pkbId} đang được phát triển.`);
-        // navigate(`/dashboard/medical-records/${pkbId}/edit`);
-    };
 
     const columns = [
         { title: 'STT', key: 'stt', render: (_, __, index) => index + 1, width: 60, align: 'center' },
@@ -161,7 +162,6 @@ const MedicalRecordListPage = () => {
                 <Space>
                     <Button icon={<EyeOutlined />} onClick={() => showDetailModal(record)}>Xem Chi Tiết</Button>
                     {canViewInvoice && <Button icon={<FileTextOutlined />} onClick={() => showInvoiceModal(record)} disabled={!record.hoa_don_lien_ket}>Hóa đơn</Button>}
-                    {canChange && <Button icon={<EditOutlined />} onClick={() => handleEditPKB(record.id)}>Sửa</Button>}
                 </Space>
             ),
         },
@@ -181,21 +181,27 @@ const MedicalRecordListPage = () => {
             <Modal title={`Chi Tiết Phiếu Khám Bệnh #${selectedRecord?.id}`} open={isDetailModalVisible} onCancel={handleModalClose} footer={null} width={800} destroyOnClose>
                 <PKBDetailView pkbData={selectedRecord} />
             </Modal>
+            
+            <Modal
+                title={`Hóa đơn cho Phiếu khám #${selectedRecord?.id}`}
+                open={isInvoiceModalVisible}
+                onCancel={handleModalClose}
+                footer={[
+                    <Button key="back" onClick={handleModalClose}>Đóng</Button>,
+                    <Button key="print" type="primary" icon={<PrinterOutlined />} onClick={handlePrint}>In / Lưu PDF</Button>
+                ]}
+                width={800}
+                destroyOnClose
+            >
+                {/* Component này chỉ để xem trước */}
+                <InvoiceContent record={selectedRecord} />
+            </Modal>
 
+            {/* Component ẩn dùng cho việc in ấn */}
             {selectedRecord && (
-                <Modal
-                    title={`Hóa đơn cho Phiếu khám #${selectedRecord.id}`}
-                    open={isInvoiceModalVisible}
-                    onCancel={handleModalClose}
-                    footer={[
-                        <Button key="back" onClick={handleModalClose}>Đóng</Button>,
-                        <Button key="print" type="primary" icon={<PrinterOutlined />} onClick={handlePrint}>In hóa đơn</Button>
-                    ]}
-                    width={800}
-                    destroyOnClose
-                >
+                <div style={{ display: 'none' }}>
                     <InvoiceContent record={selectedRecord} ref={invoiceContentRef} />
-                </Modal>
+                </div>
             )}
         </div>
     );
