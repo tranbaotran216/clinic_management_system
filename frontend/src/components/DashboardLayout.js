@@ -87,7 +87,7 @@ const DashboardLayout = () => {
               onMouseEnter={(e) => e.currentTarget.style.color = '#1890ff'}
               onMouseLeave={(e) => e.currentTarget.style.color = '#002140'}
             >
-              {collapsed ? 'PM' : 'Phòng Mạch XYZ'}
+              {collapsed ? 'G9' : 'Medical Clinic'}
             </Typography.Title>
           </a>
         </div>
