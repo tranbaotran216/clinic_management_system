@@ -248,7 +248,8 @@ class PKBSerializer(serializers.ModelSerializer):
     loai_benh_chuan_doan = LoaiBenhSerializer(read_only=True)
     chi_tiet_don_thuoc = ChiTietPKBReadSerializer(many=True, read_only=True)
     hoa_don_lien_ket = HoaDonSerializer(read_only=True)
-    class Meta: model = PKB; fields = ['id', 'ngay_kham', 'trieu_chung', 'benh_nhan', 'loai_benh_chuan_doan', 'chi_tiet_don_thuoc', 'hoa_don_lien_ket']
+    nguoi_lap_phieu = TaiKhoanPublicSerializer(read_only=True)
+    class Meta: model = PKB; fields = ['id', 'ngay_kham', 'trieu_chung', 'benh_nhan', 'loai_benh_chuan_doan', 'chi_tiet_don_thuoc', 'hoa_don_lien_ket', 'nguoi_lap_phieu']
 
 class ChiTietPKBWriteSerializer(serializers.ModelSerializer):
     thuoc_id = serializers.PrimaryKeyRelatedField(queryset=Thuoc.objects.all(), source='thuoc')

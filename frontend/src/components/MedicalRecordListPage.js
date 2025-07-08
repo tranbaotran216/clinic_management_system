@@ -27,6 +27,7 @@ const PKBDetailView = ({ pkbData }) => {
                 <Descriptions.Item label="Ngày khám">{dayjs(pkbData.ngay_kham).format('DD/MM/YYYY')}</Descriptions.Item>
                 <Descriptions.Item label="Triệu chứng" span={2}>{pkbData.trieu_chung}</Descriptions.Item>
                 <Descriptions.Item label="Dự đoán bệnh" span={2}>{pkbData.loai_benh_chuan_doan?.ten_loai_benh || 'Chưa có'}</Descriptions.Item>
+                <Descriptions.Item label="Người lập phiếu">{pkbData.nguoi_lap_phieu?.ho_ten || 'Dương Quốc Nhựt Hảo Yến Trân'}</Descriptions.Item>
             </Descriptions>
             <Title level={5}>Đơn thuốc chi tiết</Title>
             <Table
