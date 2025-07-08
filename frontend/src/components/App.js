@@ -5,7 +5,6 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, Link } from 'react
 import { Spin, Typography, message, Button } from 'antd';
 import PrivateRoute from "./PrivateRoutes";
 import DashboardLayout from "./DashboardLayout";
-export const AuthContext = createContext(null);
 
 // --- APP PAGES (Các trang do React quản lý) ---
 import LoginPage from "./LoginPage";
@@ -14,7 +13,7 @@ import RegisterAppointmentPage from "./RegisterAppointmentPage";
 
 // --- DASHBOARD PAGES ---
 import AccountsPage from "./AccountsPage";
-import DashboardHomepage from "./DashboardHomepage";
+import DashboardHomepage from "./DashboardHomePage";
 import ExaminationManagementPage from "./ExaminationManagementPage";
 import MedicationSearchPage from "./MedicationSearchPage";
 import RegulationPage from "./RegulationPage";
@@ -25,6 +24,7 @@ import MedicinePage from "./Regulations/MedicinePage";
 import ReportsPage from './ReportsPage';
 import ProfilePage from "./ProfilePage";
 
+export const AuthContext = createContext(null);
 const { Title } = Typography;
 
 // --- AUTH PROVIDER COMPONENT ---
@@ -82,8 +82,8 @@ const AuthProvider = ({ children }) => {
     const logout = () => {
         localStorage.removeItem('authToken');
         setCurrentUser(null);
-        // Chuyển hướng về trang login của React
-        window.location.href = '/app/login';
+        // Chuyển hướng về trang chủ của Django
+        window.location.href = '/'; 
     };
 
     useEffect(() => {
@@ -128,12 +128,12 @@ export default function App() {
         <AuthProvider>
             <BrowserRouter basename="/app">
                 <Routes>
-                    {/* ===== CÁC ROUTE CỦA ỨNG DỤNG REACT ===== */}
+                    {/* ===== CÁC ROUTE DO REACT QUẢN LÝ ===== */}
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register-appointment" element={<RegisterAppointmentPage />} />
                     <Route path="/unauthorized" element={<UnAuthorized />} />
 
-                    {/* ===== DASHBOARD ROUTES (PROTECTED) ===== */}
+                    {/* ===== DASHBOARD ROUTES (ĐƯỢC BẢO VỆ) ===== */}
                     <Route path="/dashboard" element={<RequireAuth><DashboardLayout /></RequireAuth>}>
                         <Route index element={<DashboardHomepage />} />
                         <Route path="profile" element={<ProfilePage />} />
@@ -176,7 +176,7 @@ export default function App() {
                         } />
                     </Route>
 
-                    {/* Route bắt tất cả các URL không hợp lệ trong /app và chuyển hướng về trang login */}
+                    {/* Bắt tất cả các URL không hợp lệ trong /app và chuyển hướng về trang login */}
                     <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
             </BrowserRouter>

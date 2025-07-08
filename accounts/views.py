@@ -234,7 +234,7 @@ class QuyDinhValueViewSet(viewsets.ModelViewSet):
         return QuyDinhValueSerializer
 
 class MedicationUsageReportView(drf_views.APIView):
-    permission_classes = [IsAuthenticated, isManager] # Hoặc custom permission 'accounts.view_medication_report'
+    permission_classes = [IsAuthenticated] 
     def get(self, request, *args, **kwargs):
         month_str = request.query_params.get('month'); year_str = request.query_params.get('year'); search_term = request.query_params.get('search')
         try:
@@ -255,7 +255,7 @@ class MedicationUsageReportView(drf_views.APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class RevenueReportView(drf_views.APIView):
-    permission_classes = [IsAuthenticated, isManager] # Hoặc custom permission 'accounts.view_revenue_report'
+    permission_classes = [IsAuthenticated] # Hoặc custom permission 'accounts.view_revenue_report'
     def get(self, request, *args, **kwargs):
         try:
             month_str = request.query_params.get('month'); year_str = request.query_params.get('year')
