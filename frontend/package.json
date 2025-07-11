@@ -10,21 +10,8 @@
   "author": "",
   "license": "ISC",
   "description": "",
-  "devDependencies": {
-    "@babel/core": "^7.27.4",
-    "@babel/preset-env": "^7.27.2",
-    "@babel/preset-react": "^7.27.1",
-    "babel-loader": "^10.0.0",
-    "cross-env": "^7.0.3",
-    "react": "^19.0.0-rc.1",
-    "react-dom": "^19.0.0-rc.1",
-    "webpack": "^5.99.9",
-    "webpack-cli": "^6.0.1",
-    "webpack-dev-server": "^5.2.2"
-  },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
-    "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@babel/plugin-transform-class-properties": "^7.27.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -35,8 +22,21 @@
     "dayjs": "^1.11.13",
     "mitt": "^3.0.1",
     "moment": "^2.30.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-router-dom": "^7.6.2",
     "react-to-print": "^3.1.0",
-    "recharts": "^2.15.3"
+    "recharts": "^2.15.3",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.27.4",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
+    "babel-loader": "^10.0.0",
+    "cross-env": "^7.0.3",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.2"
   }
 }

@@ -1,11 +1,11 @@
-// frontend/src/components/reports/RevenueReportTab.js
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, DatePicker, Button, Card, Row, Col, message, Spin, Typography, Space } from 'antd';
-import { PrinterOutlined, ReloadOutlined } from '@ant-design/icons';
+// Đã xóa PrinterOutlined, chỉ giữ lại các icon cần thiết
+import { ReloadOutlined, FileExcelOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { useReactToPrint } from 'react-to-print';
+// Đã xóa các import liên quan đến react-to-print
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import * as XLSX from 'xlsx';
 
 const { Title } = Typography;
 
@@ -22,7 +22,7 @@ const RevenueReportTab = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedMonth, setSelectedMonth] = useState(dayjs());
-    const reportRef = React.useRef();
+    // Đã xóa reportRef vì không còn dùng để in
 
     const fetchReport = async (month) => {
         if (!month) return;
@@ -46,10 +46,49 @@ const RevenueReportTab = () => {
         fetchReport(selectedMonth);
     }, [selectedMonth]);
     
-    const handlePrint = useReactToPrint({
-        content: () => reportRef.current,
-        documentTitle: `BaoCaoDoanhThu_${selectedMonth.format('MM-YYYY')}`
-    });
+    // Đã xóa hàm handlePrint
+    
+    const handleExcelExport = () => {
+        if (data.length === 0) {
+            message.warning('Không có dữ liệu để xuất file Excel.');
+            return;
+        }
+
+        message.loading({ content: 'Đang tạo file Excel...', key: 'excel_export', duration: 0 });
+
+        const totalRow = {
+            ngay: 'Tổng cộng',
+            so_benh_nhan: data.reduce((sum, item) => sum + item.so_benh_nhan, 0),
+            doanh_thu: data.reduce((sum, item) => sum + parseFloat(item.doanh_thu), 0),
+            ty_le: '100%',
+        };
+        
+        const formattedData = data.map(item => ({
+            'Ngày': dayjs(item.ngay).format('DD/MM/YYYY'),
+            'Số bệnh nhân': item.so_benh_nhan,
+            'Doanh thu (VND)': item.doanh_thu,
+            'Tỷ lệ (%)': item.ty_le,
+        }));
+        
+        const finalData = [
+            ...formattedData,
+            {
+                'Ngày': 'Tổng cộng',
+                'Số bệnh nhân': totalRow.so_benh_nhan,
+                'Doanh thu (VND)': totalRow.doanh_thu,
+                'Tỷ lệ (%)': totalRow.ty_le,
+            }
+        ];
+
+        const ws = XLSX.utils.json_to_sheet(finalData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "BaoCaoDoanhThu");
+
+        const fileName = `BaoCaoDoanhThu_${selectedMonth.format('MM-YYYY')}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        
+        message.success({ content: 'Tạo file Excel thành công!', key: 'excel_export', duration: 2 });
+    };
 
     const columns = [
         { title: 'STT', key: 'stt', render: (_, __, i) => i + 1, width: 60, align: 'center' },
@@ -77,13 +116,15 @@ const RevenueReportTab = () => {
                     <Col>
                         <Space>
                             <Button icon={<ReloadOutlined />} onClick={() => fetchReport(selectedMonth)} loading={loading} />
-                            <Button type="primary" icon={<PrinterOutlined />} onClick={handlePrint}>In báo cáo</Button>
+                            {/* Nút Lưu Excel giờ là nút chính */}
+                            <Button type="primary" icon={<FileExcelOutlined />} onClick={handleExcelExport}>Lưu Excel</Button>
                         </Space>
                     </Col>
                 </Row>
             </Card>
             
-            <div ref={reportRef} style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            {/* Đã xóa ref={reportRef} khỏi thẻ div này */}
+            <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <Title level={4} style={{ textAlign: 'center', flexShrink: 0 }}>BÁO CÁO DOANH THU THÁNG {selectedMonth.format("MM/YYYY")}</Title>
                     
