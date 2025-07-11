@@ -289,3 +289,15 @@ class BaoCaoSuDungThuocSerializer(serializers.Serializer):
     don_vi_tinh = serializers.CharField(source='thuoc__don_vi_tinh__ten_don_vi_tinh', allow_null=True)
     tong_so_luong_su_dung = serializers.IntegerField()
     so_lan_ke_don = serializers.IntegerField()
+    
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField(
+        error_messages={'required': 'Vui lòng nhập email.', 'invalid': 'Địa chỉ email không hợp lệ.'}
+    )
+
+    def validate_email(self, value):
+        if not TaiKhoan.objects.filter(email__iexact=value).exists():
+            # Luôn trả về thông báo thành công để tránh việc lộ thông tin email nào tồn tại trong hệ thống
+            pass
+        return value
+

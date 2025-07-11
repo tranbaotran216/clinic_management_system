@@ -1,7 +1,7 @@
 // src/pages/LoginPage.js
 
 import React, { useState, useContext, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   Form,
   Input,
@@ -9,13 +9,13 @@ import {
   Card,
   Typography,
   Alert,
-  Modal, // <-- THÊM: Import Modal
-  message, // <-- THÊM: Dùng message để thông báo thành công
+  Modal,
+  message,
 } from 'antd';
-import { UserOutlined, LockOutlined, LoginOutlined, MailOutlined } from '@ant-design/icons'; // <-- THÊM: Import MailOutlined
-import { AuthContext } from './App'; // <-- Cập nhật đường dẫn nếu cần
+import { UserOutlined, LockOutlined, LoginOutlined, MailOutlined } from '@ant-design/icons';
+import { AuthContext } from './App';
 
-const { Title, Text, Link } = Typography; // <-- THÊM: Import Link
+const { Title, Text } = Typography;
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -24,11 +24,9 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // ================== THÊM: State và form cho Modal ==================
   const [isForgotModalVisible, setIsForgotModalVisible] = useState(false);
   const [forgotPasswordForm] = Form.useForm();
   const [forgotLoading, setForgotLoading] = useState(false);
-  // ===================================================================
 
   const from = location.state?.from?.pathname || '/dashboard';
 
@@ -41,61 +39,63 @@ const LoginPage = () => {
   const onFinish = async (values) => {
     setError('');
     setLoading(true);
-    try {
-      // Sửa lại logic gọi hàm login để xử lý thông báo lỗi từ API
-      const result = await login({
-        ten_dang_nhap: values.tenDangNhap,
-        password: values.password,
-      });
+    // Hàm login trong AuthContext đã dùng fetch, nên giữ nguyên
+    const result = await login({
+      ten_dang_nhap: values.tenDangNhap,
+      password: values.password,
+    });
 
-      if (result.success) {
-        navigate(from, { replace: true });
-      } else {
-        setError(result.message || 'Tên đăng nhập hoặc mật khẩu không đúng.');
-      }
-    } catch (err) {
-      setError('Đã xảy ra lỗi trong quá trình đăng nhập.');
-      console.error("Login error:", err);
-    } finally {
-      setLoading(false);
+    if (result.success) {
+      navigate(from, { replace: true });
+    } else {
+      setError(result.message || 'Tên đăng nhập hoặc mật khẩu không đúng.');
     }
+    setLoading(false);
   };
 
   const onFinishFailed = (errorInfo) => {
     console.log('Validation Failed:', errorInfo);
   };
 
-  // ================== THÊM: Các hàm xử lý cho Modal ==================
   const showForgotModal = () => {
     setIsForgotModalVisible(true);
-  };
-
-  const handleForgotOk = async () => {
-    try {
-        setForgotLoading(true);
-        const values = await forgotPasswordForm.validateFields();
-        // **TODO:** Bạn cần tự xây dựng API để xử lý việc này
-        console.log('Gửi yêu cầu reset cho email:', values.email);
-        message.success('Nếu email tồn tại, một liên kết đặt lại mật khẩu đã được gửi.');
-        
-        setIsForgotModalVisible(false);
-        forgotPasswordForm.resetFields();
-
-    } catch (errorInfo) {
-        message.error('Vui lòng nhập một địa chỉ email hợp lệ.');
-    } finally {
-        setForgotLoading(false);
-    }
   };
 
   const handleForgotCancel = () => {
     setIsForgotModalVisible(false);
   };
+
+  // ================== SỬA LẠI HÀM NÀY ĐỂ DÙNG FETCH ==================
+  const handleForgotOk = async () => {
+    try {
+      setForgotLoading(true);
+      const values = await forgotPasswordForm.validateFields();
+      
+      const response = await fetch('/api/auth/password-reset/request/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: values.email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        message.success(data.detail);
+        setIsForgotModalVisible(false);
+        forgotPasswordForm.resetFields();
+      } else {
+        throw new Error(data.detail || 'Có lỗi xảy ra.');
+      }
+    } catch (error) {
+      message.error(error.message);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
   // ===================================================================
 
-
   return (
-    <> {/* Bọc tất cả trong Fragment để thêm Modal */}
+    <>
       <div
         style={{
           minHeight: '100vh',
@@ -165,11 +165,9 @@ const LoginPage = () => {
               />
             </Form.Item>
             
-            {/* ================== THÊM: Link Quên mật khẩu ================== */}
             <div style={{ textAlign: 'right', marginBottom: 24 }}>
                 <Link onClick={showForgotModal}>Quên mật khẩu?</Link>
             </div>
-            {/* =================================================================== */}
 
             <Form.Item>
               <Button
@@ -192,7 +190,6 @@ const LoginPage = () => {
         </Card>
       </div>
 
-      {/* ================== THÊM: Modal Quên mật khẩu ================== */}
       <Modal
         title="Đặt lại mật khẩu"
         open={isForgotModalVisible}
@@ -215,7 +212,6 @@ const LoginPage = () => {
             </Form.Item>
         </Form>
       </Modal>
-      {/* =================================================================== */}
     </>
   );
 };

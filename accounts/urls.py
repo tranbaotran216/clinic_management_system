@@ -24,7 +24,10 @@ from .views import (
     
     # --- APIViews MỚI cho Báo cáo ---
     MedicationUsageReportView,
-    RevenueReportView
+    RevenueReportView,
+    
+    # --- Views cho Reset Password ---
+    PasswordResetRequestView
 )
 
 # Tạo một router để tự động tạo các URL cho ViewSets
@@ -50,26 +53,25 @@ router.register(r'ds-kham', DSKhamViewSet, basename='dskham') # Danh sách chờ
 router.register(r'pkb', PKBViewSet, basename='pkb') # Phiếu khám bệnh
 router.register(r'hoa-don', HoaDonViewSet, basename='hoadon')
 
-
-# --- DANH SÁCH URL CỦA APP ACCOUNTS ---
+# --- DANH SÁCH URL CỦA APP ACCOUNTS (ĐÃ SẮP XẾP LẠI) ---
 urlpatterns = [
-  # URLs cho các API đơn lẻ (Class-Based Views không thuộc ViewSet)
-  #  path('auth/register/', RegisterView.as_view(), name='auth_register'),
-    path('login/', LoginView.as_view(), name='auth_login'),
-    path('auth/me/', CurrentUserDetailView.as_view(), name='current_user_details'),
-    path('dashboard/summary/', DashboardSummaryView.as_view(), name='dashboard_summary'),
+    # --- Nhóm API xác thực & người dùng ---
+    path('auth/login/', LoginView.as_view(), name='login'), # Đổi tên cho gọn
+    path('auth/me/', CurrentUserDetailView.as_view(), name='current-user'),
+    path('auth/password-reset/request/', PasswordResetRequestView.as_view(), name='password-reset-request'),
+    # ================== SỬA LỖI TẠI ĐÂY ==================
+    # Thêm <str:uidb64> để nhận UID từ URL mà frontend gửi lên
 
-    # URLs cho các API Báo cáo
-    path('reports/medication-usage/', MedicationUsageReportView.as_view(), name='report_medication_usage'),
-    path('reports/revenue/', RevenueReportView.as_view(), name='report_revenue'),
+    # =======================================================
 
-    # Bao gồm tất cả các URL được tạo tự động bởi router
-    # Bạn chỉ cần include router một lần.
-    # Nếu file urls.py này được include trong project urls.py với prefix 'api/',
-    # thì các URL của router sẽ tự động có prefix đó.
-    # Ví dụ: /api/users/, /api/groups/
-    path('', include(router.urls)), # Giữ lại dòng này là đủ nếu project urls.py đã có prefix 'api/'
-    # Bỏ dòng path('api/', include(router.urls)), vì nó sẽ tạo ra /api/api/users/ (lặp prefix)
-    path('register-appointment/', PublicAppointmentView.as_view(), name='register-appointment' )
+    # --- Nhóm API công khai ---
+    path('public/register-appointment/', PublicAppointmentView.as_view(), name='public-register-appointment' ),
 
+    # --- Nhóm API cho Dashboard & Báo cáo ---
+    path('dashboard/summary/', DashboardSummaryView.as_view(), name='dashboard-summary'),
+    path('reports/medication-usage/', MedicationUsageReportView.as_view(), name='report-medication-usage'),
+    path('reports/revenue/', RevenueReportView.as_view(), name='report-revenue'),
+
+    # --- Bao gồm tất cả các URL từ router ở cuối cùng ---
+    path('', include(router.urls)),
 ]

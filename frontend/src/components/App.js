@@ -60,7 +60,7 @@ const AuthProvider = ({ children }) => {
 
     const login = async (credentials) => {
         try {
-            const response = await fetch('/api/login/', {
+            const response = await fetch('/api/auth/login/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(credentials)
