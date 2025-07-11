@@ -2,14 +2,15 @@ import random
 import string
 from datetime import date
 from decimal import Decimal
-from django.conf import settings # <-- THIẾU IMPORT NÀY
+from django.conf import settings 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group as DjangoGroup, Permission as DjangoPermission
-from django.core.mail import send_mail # <-- ĐÃ THÊM IMPORT
+from django.core.mail import send_mail 
 from django.db.models import Sum, Count, F, DecimalField
 from django.db.models.functions import TruncDay
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, generics, status, views as drf_views, viewsets
@@ -37,7 +38,7 @@ from .serializers import (
     QuyDinhValueSerializer, QuyDinhValueUpdateSerializer,
     # Serializers cho Báo cáo
     BaoCaoSuDungThuocSerializer, BaoCaoDoanhThuNgaySerializer,
-    PasswordResetRequestSerializer
+    PasswordResetRequestSerializer, ChangePasswordSerializer
 )
 
 from rest_framework.permissions import IsAuthenticated, AllowAny, DjangoModelPermissions
@@ -319,3 +320,28 @@ class PasswordResetRequestView(generics.GenericAPIView):
             {"detail": "Vui lòng kiểm tra email, mật khẩu mới đã được gửi đi."},
             status=status.HTTP_200_OK
         )
+        
+class ChangePasswordView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChangePasswordSerializer
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        user_object = self.get_object()
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        
+        # is_valid sẽ chạy các hàm validate trong serializer
+        serializer.is_valid(raise_exception=True)
+
+        # Nếu dữ liệu hợp lệ, thực hiện đổi mật khẩu
+        user_object.set_password(serializer.validated_data.get("new_password"))
+        user_object.save()
+        
+        # Gửi email thông báo (tùy chọn)
+        subject = 'Thông báo thay đổi mật khẩu'
+        message_body = f'Chào {user_object.ho_ten},\n\nMật khẩu của bạn tại Phòng Mạch Medical Clinic đã được thay đổi thành công vào lúc {timezone.now().strftime("%H:%M %d/%m/%Y")}.\n\nNếu bạn không thực hiện hành động này, vui lòng liên hệ với chúng tôi ngay lập tức.\n\nTrân trọng.'
+        send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user_object.email])
+
+        return Response({"detail": "Đổi mật khẩu thành công."}, status=status.HTTP_200_OK)

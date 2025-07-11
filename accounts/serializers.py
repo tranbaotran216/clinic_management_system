@@ -301,3 +301,23 @@ class PasswordResetRequestSerializer(serializers.Serializer):
             pass
         return value
 
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(required=True, label="Mật khẩu hiện tại")
+    new_password = serializers.CharField(required=True, label="Mật khẩu mới")
+    confirm_password = serializers.CharField(required=True, label="Xác nhận mật khẩu mới")
+
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Mật khẩu hiện tại không chính xác.")
+        return value
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({"new_password": "Mật khẩu mới và mật khẩu xác nhận không khớp."})
+        try:
+            validate_password(attrs['new_password'], self.context['request'].user)
+        except serializers.ValidationError as e:
+            raise serializers.ValidationError({'new_password': list(e.messages)})
+            
+        return attrs

@@ -27,7 +27,8 @@ from .views import (
     RevenueReportView,
     
     # --- Views cho Reset Password ---
-    PasswordResetRequestView
+    PasswordResetRequestView,
+    ChangePasswordView
 )
 
 # Tạo một router để tự động tạo các URL cho ViewSets
@@ -59,6 +60,7 @@ urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='login'), # Đổi tên cho gọn
     path('auth/me/', CurrentUserDetailView.as_view(), name='current-user'),
     path('auth/password-reset/request/', PasswordResetRequestView.as_view(), name='password-reset-request'),
+    path('auth/change-password/', ChangePasswordView.as_view(), name='auth-change-password'),
     # ================== SỬA LỖI TẠI ĐÂY ==================
     # Thêm <str:uidb64> để nhận UID từ URL mà frontend gửi lên
 
