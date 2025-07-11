@@ -11,6 +11,10 @@ from django.db.models.functions import TruncDay
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Count, Sum, F, DecimalField
+from django.db.models.functions import TruncDay, Coalesce
+
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, generics, status, views as drf_views, viewsets
@@ -68,17 +72,57 @@ class CurrentUserDetailView(drf_views.APIView):
         serializer = TaiKhoanPublicSerializer(request.user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+import pytz
+
 class DashboardSummaryView(drf_views.APIView):
     permission_classes = [IsAuthenticated]
+    
     def get(self, request, *args, **kwargs):
-        today = date.today()
+        vietnam_tz = pytz.timezone('Asia/Ho_Chi_Minh')
+
+        today = timezone.now().astimezone(vietnam_tz).date()
+        
+        seven_days_ago = today - timedelta(days=6)
+
         daily_appointments = DSKham.objects.filter(ngay_kham=today).count()
-        daily_revenue = HoaDon.objects.filter(ngay_thanh_toan__date=today).aggregate(
-            total=Sum(F('tien_kham') + F('tien_thuoc'))
-        )['total'] or 0
+        
+        daily_revenue_val = HoaDon.objects.filter(ngay_thanh_toan__date=today).aggregate(
+            total=Coalesce(Sum(F('tien_kham') + F('tien_thuoc')), Decimal(0), output_field=DecimalField())
+        )['total']
+        
+        top_employee_data = PKB.objects.filter(ngay_kham__gte=seven_days_ago)\
+                                       .values('nguoi_lap_phieu__ho_ten')\
+                                       .annotate(pkb_count=Count('id'))\
+                                       .order_by('-pkb_count')\
+                                       .first()
+
+        weekly_patient_stats = DSKham.objects.filter(ngay_kham__gte=seven_days_ago)\
+                                         .annotate(day=TruncDay('ngay_kham'))\
+                                         .values('day')\
+                                         .annotate(patient_count=Count('id'))\
+                                         .order_by('day')
+
+        top_diseases_stats = PKB.objects.filter(ngay_kham__gte=seven_days_ago)\
+                                          .exclude(loai_benh_chuan_doan__isnull=True)\
+                                          .values('loai_benh_chuan_doan__ten_loai_benh')\
+                                          .annotate(disease_count=Count('id'))\
+                                          .order_by('-disease_count')[:5]
+
+        weekly_stats_formatted = [
+            {'date': item['day'].strftime('%d/%m'), 'so_benh_nhan': item['patient_count']}
+            for item in weekly_patient_stats
+        ]
+        top_diseases_formatted = [
+            {'name': item['loai_benh_chuan_doan__ten_loai_benh'], 'value': item['disease_count']}
+            for item in top_diseases_stats
+        ]
+
         return Response({
             'daily_appointments': daily_appointments,
-            'daily_revenue': daily_revenue
+            'daily_revenue': daily_revenue_val,
+            'top_employee_week': top_employee_data,
+            'weekly_patient_stats': weekly_stats_formatted,
+            'top_diseases_stats': top_diseases_formatted,
         }, status=status.HTTP_200_OK)
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -244,7 +288,7 @@ class MedicationUsageReportView(drf_views.APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class RevenueReportView(drf_views.APIView):
-    permission_classes = [IsAuthenticated] # Hoặc custom permission 'accounts.view_revenue_report'
+    permission_classes = [IsAuthenticated] 
     def get(self, request, *args, **kwargs):
         try:
             month_str = request.query_params.get('month'); year_str = request.query_params.get('year')

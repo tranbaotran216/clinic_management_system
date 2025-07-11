@@ -1,4 +1,4 @@
-// frontend/src/components/ReportsPage.js
+// File: frontend/src/components/ReportsPage.js
 
 import React from 'react';
 import { Tabs, Typography } from 'antd';
@@ -14,8 +14,8 @@ const ReportsPage = () => {
     ];
 
     return (
-        <div style={{ padding: 24 }}>
-            <Title level={3}>Báo cáo & Thống kê</Title>
+        <div>
+            <Title level={3} style={{ marginBottom: 24 }}>Báo cáo & Thống kê</Title>
             <Tabs defaultActiveKey="revenue" items={items} type="card" />
         </div>
     );
