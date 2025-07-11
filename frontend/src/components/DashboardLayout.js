@@ -4,7 +4,7 @@ import React, { useContext, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext, ThemeContext } from './App.js';
 import {
-  Layout, Menu, Avatar, Dropdown, Space, Breadcrumb, Typography, Switch, theme
+  Layout, Menu, Avatar, Dropdown, Space, Breadcrumb, Typography, Switch, theme, Spin
 } from 'antd';
 import {
   HomeOutlined, UserOutlined, BookOutlined, SearchOutlined, BarChartOutlined,
@@ -106,7 +106,7 @@ const DashboardLayout = () => {
                 <Dropdown menu={{ items: userDropdownItems }} trigger={['click']}>
                     <a onClick={e => e.preventDefault()} href="!#">
                         <Space style={{ cursor: 'pointer' }}>
-                            <Avatar size="small" icon={<UserOutlined />} />
+                            <Avatar size="small" src={currentUser.avatar}  icon={!currentUser.avatar && <UserOutlined />}  />
                             <span style={{ color: token.colorText }}>{currentUser.ho_ten || currentUser.ten_dang_nhap}</span>
                         </Space>
                     </a>
