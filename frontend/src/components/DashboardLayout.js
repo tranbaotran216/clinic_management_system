@@ -52,7 +52,7 @@ const DashboardLayout = () => {
     const userDropdownItems = [
       {
         key: 'profile',
-        label: <span onClick={() => navigate('/profile')}>Thông tin tài khoản</span>, // Sửa lại navigate cho đúng
+        label: <span onClick={() => navigate('profile')}>Thông tin tài khoản</span>, 
         icon: <UserOutlined />,
       },
       {
