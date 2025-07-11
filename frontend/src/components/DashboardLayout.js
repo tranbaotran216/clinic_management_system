@@ -1,4 +1,4 @@
-// frontend/src/DashboardLayout.js (PHIÊN BẢN CUỐI CÙNG - CHẮC CHẮN HOẠT ĐỘNG)
+// frontend/src/DashboardLayout.js
 
 import React, { useContext, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -35,20 +35,24 @@ const generateMenuItems = (configItems, userPermissions = []) => {
 const DashboardLayout = () => {
     const { currentUser, logout } = useContext(AuthContext);
     const [collapsed, setCollapsed] = useState(false);
-    const navigate = useNavigate();
+    const navigate = useNavigate(); // Vẫn giữ navigate để dùng cho các chức năng khác
     const location = useLocation();
 
     if (!currentUser) { return null; }
 
     const handleLogout = async () => {
-        await logout();
-        navigate('/login');
+        await logout(); // Hàm này trong AuthContext sẽ xóa token khỏi localStorage
+        
+        // ================== THAY ĐỔI TẠI ĐÂY ==================
+        // Thực hiện một lần tải lại trang hoàn toàn và điều hướng về trang chủ gốc
+        window.location.href = '/';
+        // =======================================================
     };
 
     const userDropdownItems = [
       {
         key: 'profile',
-        label: <span onClick={() => navigate('/dashboard/profile')}>Thông tin tài khoản</span>,
+        label: <span onClick={() => navigate('profile')}>Thông tin tài khoản</span>, 
         icon: <UserOutlined />,
       },
       {
@@ -63,24 +67,55 @@ const DashboardLayout = () => {
 
     const menuItems = generateMenuItems(rawMenuConfig, currentUser.permissions);
     
+    // Tạo Breadcrumb dựa trên location
     const pathSnippets = location.pathname.split('/').filter(i => i);
-    const currentKey = pathSnippets[1] || 'home';
-    
-    const breadcrumbItems = [ /* ... */ ];
+    const breadcrumbNameMap = {
+      'dashboard': 'Dashboard',
+      'accounts': 'Quản lý tài khoản',
+      'medical-records': 'Quản lý khám bệnh',
+      'medications': 'Tra cứu thuốc',
+      'search': 'Tìm kiếm',
+      'reports': 'Báo cáo & Thống kê',
+      'regulations': 'Quản lý quy định',
+      'profile': 'Thông tin cá nhân',
+    };
+
+    const breadcrumbItems = [
+        { title: <Link to="/dashboard"><HomeOutlined /></Link> }
+    ].concat(pathSnippets.map((_, index) => {
+        const url = `/${pathSnippets.slice(0, index + 1).join('/')}`;
+        const name = breadcrumbNameMap[pathSnippets[index]] || pathSnippets[index];
+        const isLast = index === pathSnippets.length - 1;
+        return isLast ? { title: name } : { title: <Link to={url}>{name}</Link> };
+    }));
+
+    // Lấy key cho menu đang active
+    const currentKey = pathSnippets.length > 1 ? pathSnippets.slice(1).join('/') : 'home';
 
     return (
-      // Layout cha chiếm toàn bộ chiều cao của viewport
       <Layout style={{ height: '100vh' }}>
         <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed} theme="light">
           <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Typography.Title level={4} style={{ margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', color: '#002140' }}>
-              {collapsed ? 'PM' : 'Phòng Mạch XYZ'}
-            </Typography.Title>
+            <a href="/" style={{ textDecoration: 'none' }}>
+              <Typography.Title 
+                level={4} 
+                style={{ 
+                  margin: 0, 
+                  whiteSpace: 'nowrap', 
+                  overflow: 'hidden', 
+                  color: '#002140',
+                  transition: 'color 0.3s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#1890ff'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#002140'}
+              >
+                {collapsed ? 'G9' : 'Medical Clinic'}
+              </Typography.Title>
+            </a>
           </div>
           <Menu mode="inline" theme="light" selectedKeys={[currentKey]} items={menuItems} />
         </Sider>
-        
-        {/* Layout bên phải được set thành flex container dọc */}
+       
         <Layout style={{ display: 'flex', flexDirection: 'column' }}>
           <Header style={{ padding: '0 24px', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
             <Breadcrumb items={breadcrumbItems} />
@@ -97,7 +132,7 @@ const DashboardLayout = () => {
           </Header>
           
           <Content style={{ margin: '16px', overflow: 'auto', flex: '1 1 0' }}>
-            <div style={{ padding: 24, background: '#fff', borderRadius: '8px' }}>
+            <div style={{ padding: 24, background: '#fff', borderRadius: '8px', minHeight: '100%' }}>
               <Outlet />
             </div>
           </Content>

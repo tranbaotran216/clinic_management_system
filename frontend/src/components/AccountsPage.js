@@ -1,6 +1,7 @@
 // frontend/src/AccountsPage.js
+
 import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { AuthContext } from './App';
+import { AuthContext } from './App'; // Đảm bảo đường dẫn này chính xác
 import {
     Typography, Table, Button, Modal, Form, Input, Select,
     Space, Popconfirm, message, Tag, Tooltip, Row, Col, Tabs
@@ -8,7 +9,7 @@ import {
 import {
     PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined
 } from '@ant-design/icons';
-import RolesPage from './RolesPage'; // Import trang quản lý vai trò
+import RolesPage from './RolesPage'; // Đảm bảo đường dẫn này chính xác
 
 const { Option } = Select;
 const { Title } = Typography;
@@ -26,7 +27,10 @@ const UserManagementTab = () => {
     const [editingUser, setEditingUser] = useState(null);
     const [form] = Form.useForm();
     const [searchText, setSearchText] = useState('');
+    const [serverErrors, setServerErrors] = useState({}); // State để lưu lỗi từ server
+    const [modalLoading, setModalLoading] = useState(false); // State loading cho nút OK của modal
 
+    // Giữ nguyên tên permission theo custom model của bạn
     const canAddAccounts = currentUser?.permissions?.includes('accounts.add_taikhoan');
     const canChangeAccounts = currentUser?.permissions?.includes('accounts.change_taikhoan');
     const canDeleteAccounts = currentUser?.permissions?.includes('accounts.delete_taikhoan');
@@ -45,13 +49,20 @@ const UserManagementTab = () => {
                 const groupsData = await groupsRes.json();
                 setUsers(usersData.results || usersData);
                 setGroups(groupsData.results || groupsData);
-            } else { message.error('Tải dữ liệu thất bại.'); }
-        } catch (error) { message.error('Lỗi kết nối.'); }
-        finally { setLoading(false); }
+            } else {
+                message.error('Tải dữ liệu thất bại.');
+            }
+        } catch (error) {
+            message.error('Lỗi kết nối máy chủ.');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    useEffect(() => { fetchData(); }, []);
-    
+    useEffect(() => {
+        fetchData();
+    }, []);
+
     const filteredUsers = useMemo(() => {
         if (!searchText) return users;
         const lowercasedSearchText = searchText.toLowerCase();
@@ -64,6 +75,7 @@ const UserManagementTab = () => {
 
     const showModal = (user = null) => {
         setEditingUser(user);
+        setServerErrors({}); // Luôn xóa lỗi cũ khi mở modal
         if (user) {
             form.setFieldsValue({ ...user, groups: user.groups.map(g => g.id) });
         } else {
@@ -74,6 +86,8 @@ const UserManagementTab = () => {
     };
 
     const handleOk = async () => {
+        setModalLoading(true);
+        setServerErrors({}); // Xóa lỗi cũ trước khi submit
         try {
             const values = await form.validateFields();
             const token = localStorage.getItem('authToken');
@@ -82,33 +96,62 @@ const UserManagementTab = () => {
             if (editingUser) url += `${editingUser.id}/`;
 
             let payload = { ...values };
+            // Nếu sửa mà không nhập mật khẩu mới, không gửi trường password
             if (editingUser && (!values.password || values.password.trim() === '')) {
                 delete payload.password;
                 delete payload.password2;
             }
-            const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
+
+            const response = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
             if (response.ok) {
                 message.success(`Đã ${editingUser ? 'cập nhật' : 'tạo'} tài khoản thành công!`);
                 setIsModalVisible(false);
                 fetchData();
+            } else if (response.status === 400) {
+                // Lỗi validation từ DRF
+                setServerErrors(data); // Cập nhật state lỗi để hiển thị trên form
+                message.error('Thông tin không hợp lệ, vui lòng kiểm tra lại.');
             } else {
-                const errorData = await response.json().catch(() => ({}));
-                message.error(`Lỗi: ${errorData.detail || Object.values(errorData).flat().join(' ')}`, 7);
+                // Các lỗi khác từ server (500, 403, 404...)
+                message.error(data.detail || 'Đã có lỗi xảy ra từ máy chủ.');
             }
-        } catch (errorInfo) { console.log('Validation/API error:', errorInfo); }
+
+        } catch (errorInfo) {
+            // Lỗi từ validation của AntD Form (khi người dùng chưa điền đủ trường required)
+            console.log('AntD Form Validation Failed:', errorInfo);
+        } finally {
+            setModalLoading(false);
+        }
     };
 
-    const handleCancel = () => { setIsModalVisible(false); };
+    const handleCancel = () => {
+        setIsModalVisible(false);
+    };
 
     const handleDelete = async (userId) => {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`/api/users/${userId}/`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`/api/users/${userId}/`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (response.status === 204 || response.ok) {
                 message.success('Xóa tài khoản thành công!');
                 fetchData();
-            } else { message.error((await response.json().catch(() => ({}))).detail || 'Lỗi khi xóa tài khoản.'); }
-        } catch (error) { message.error('Lỗi kết nối khi xóa.'); }
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                message.error(errorData.detail || 'Lỗi khi xóa tài khoản.');
+            }
+        } catch (error) {
+            message.error('Lỗi kết nối khi xóa.');
+        }
     };
 
     const columns = [
@@ -155,18 +198,90 @@ const UserManagementTab = () => {
                     </Space>
                 </Col>
             </Row>
-            <Table columns={columns} dataSource={filteredUsers} loading={loading} rowKey="id" bordered scroll={{ x: 'max-content' }} />
-            <Modal title={editingUser ? `Sửa: ${editingUser.ten_dang_nhap}` : "Thêm người dùng"} open={isModalVisible} onOk={handleOk} onCancel={handleCancel} destroyOnHidden>
-                <Form form={form} layout="vertical" style={{ marginTop: 24 }}>
-                    <Form.Item name="ho_ten" label="Họ tên" rules={[{ required: true }]}><Input /></Form.Item>
-                    <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}><Input /></Form.Item>
-                    <Form.Item name="ten_dang_nhap" label="Tên đăng nhập" rules={[{ required: true }]}><Input disabled={!!editingUser} /></Form.Item>
-                    <Form.Item name="groups" label="Vai trò" rules={[{ required: true }]}>
-                        <Select mode="multiple" placeholder="Chọn vai trò">{groups.map(g => <Option key={g.id} value={g.id}>{g.name}</Option>)}</Select>
+            <Table columns={columns} dataSource={filteredUsers} loading={loading} rowKey="id" bordered scroll={{ x: 'max-content' }} pagination={{ pageSize: 6 }}/>
+            <Modal
+                title={editingUser ? `Sửa: ${editingUser.ten_dang_nhap}` : "Thêm người dùng"}
+                open={isModalVisible}
+                onOk={handleOk}
+                onCancel={handleCancel}
+                destroyOnClose
+                confirmLoading={modalLoading}
+            >
+                <Form form={form} layout="vertical" style={{ marginTop: 24 }} name="userForm">
+                    <Form.Item
+                        name="ho_ten"
+                        label="Họ tên"
+                        rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}
+                        validateStatus={serverErrors.ho_ten ? 'error' : ''}
+                        help={serverErrors.ho_ten?.[0]}
+                    >
+                        <Input />
                     </Form.Item>
-                    <Form.Item name="is_active" label="Trạng thái" initialValue={true}><Select><Option value={true}>Hoạt động</Option><Option value={false}>Khóa</Option></Select></Form.Item>
-                    <Form.Item name="password" label={editingUser ? "Mật khẩu mới (bỏ trống nếu không đổi)" : "Mật khẩu"} rules={editingUser ? [] : [{ required: true }]} hasFeedback><Input.Password /></Form.Item>
-                    <Form.Item name="password2" label="Xác nhận mật khẩu" dependencies={['password']} hasFeedback rules={[({ getFieldValue }) => ({ required: !!getFieldValue('password'), validator: (_, value) => !value || getFieldValue('password') === value ? Promise.resolve() : Promise.reject(new Error('Mật khẩu không khớp!')) })]}><Input.Password /></Form.Item>
+                    <Form.Item
+                        name="email"
+                        label="Email"
+                        rules={[{ required: true, type: 'email', message: 'Email không hợp lệ!' }]}
+                        validateStatus={serverErrors.email ? 'error' : ''}
+                        help={serverErrors.email?.[0]}
+                    >
+                        <Input />
+                    </Form.Item>
+                    <Form.Item
+                        name="ten_dang_nhap"
+                        label="Tên đăng nhập"
+                        rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}
+                        validateStatus={serverErrors.ten_dang_nhap ? 'error' : ''}
+                        help={serverErrors.ten_dang_nhap?.[0]}
+                    >
+                        <Input disabled={!!editingUser} />
+                    </Form.Item>
+                    <Form.Item
+                        name="groups"
+                        label="Vai trò"
+                        rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}
+                    >
+                        <Select mode="multiple" placeholder="Chọn vai trò">
+                            {groups.map(g => <Option key={g.id} value={g.id}>{g.name}</Option>)}
+                        </Select>
+                    </Form.Item>
+                    <Form.Item name="is_active" label="Trạng thái" initialValue={true}>
+                        <Select>
+                            <Option value={true}>Hoạt động</Option>
+                            <Option value={false}>Khóa</Option>
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        name="password"
+                        label={editingUser ? "Mật khẩu mới (bỏ trống nếu không đổi)" : "Mật khẩu"}
+                        rules={editingUser ? [] : [{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
+                        hasFeedback
+                        validateStatus={serverErrors.password ? 'error' : ''}
+                        help={serverErrors.password ? serverErrors.password.join(' ') : null}
+                    >
+                        <Input.Password />
+                    </Form.Item>
+                    <Form.Item
+                        name="password2"
+                        label="Xác nhận mật khẩu"
+                        dependencies={['password']}
+                        hasFeedback
+                        rules={[
+                            ({ getFieldValue }) => ({
+                                required: !!getFieldValue('password'),
+                                message: 'Vui lòng xác nhận mật khẩu!'
+                            }),
+                            ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                    if (!value || getFieldValue('password') === value) {
+                                        return Promise.resolve();
+                                    }
+                                    return Promise.reject(new Error('Mật khẩu không khớp!'));
+                                },
+                            })
+                        ]}
+                    >
+                        <Input.Password />
+                    </Form.Item>
                 </Form>
             </Modal>
         </div>
@@ -178,13 +293,14 @@ const UserManagementTab = () => {
 // ===================================================================
 const AccountsPage = () => {
     const { currentUser } = useContext(AuthContext);
+    // Giả sử permission để xem vai trò là 'auth.view_group' (mặc định của Django)
     const canViewRoles = currentUser?.permissions?.includes('auth.view_group');
 
     const tabItems = [
-        { key: 'users', label: `Quản lý Người dùng`, children: <UserManagementTab /> },
+        { key: 'users', label: 'Quản lý Người dùng', children: <UserManagementTab /> },
     ];
     if (canViewRoles) {
-        tabItems.push({ key: 'roles', label: `Quản lý Vai trò & Phân quyền`, children: <RolesPage /> });
+        tabItems.push({ key: 'roles', label: 'Quản lý Vai trò & Phân quyền', children: <RolesPage /> });
     }
 
     return (

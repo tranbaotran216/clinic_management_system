@@ -272,13 +272,13 @@ const WaitingListPage = () => {
                 </Row>
             </Card>
 
-            <Table columns={columns} dataSource={filteredWaitingList} loading={loading} rowKey="id" bordered scroll={{ x: 'max-content' }}/>
+            <Table columns={columns} dataSource={filteredWaitingList} loading={loading} rowKey="id" bordered scroll={{ x: 'max-content' }} pagination={{ pageSize: 6 }}/>
 
             <Modal title={editingItem ? "Sửa thông tin đăng ký" : "Thêm vào danh sách chờ"} open={isRegisterModalVisible} onOk={handleRegisterOk} onCancel={handleRegisterCancel} destroyOnClose okText={editingItem ? "Lưu" : "Thêm"} cancelText="Hủy" width={720}>
                 <Form form={registerForm} layout="vertical" style={{ marginTop: 24 }} onFinish={handleRegisterOk}>
                      <Row gutter={24}>
                         <Col span={12}><Form.Item name="ho_ten" label="Họ và tên:" rules={[{ required: true }]}><Input placeholder="Họ và tên" /></Form.Item></Col>
-                        <Col span={12}><Form.Item name="gioi_tinh" label="Giới tính:" rules={[{ required: true }]}><Select placeholder="Giới tính"><Option value="M">Nam</Option><Option value="F">Nữ</Option><Option value="O">Khác</Option></Select></Form.Item></Col>
+                        <Col span={12}><Form.Item name="gioi_tinh" label="Giới tính:" rules={[{ required: true }]}><Select placeholder="Giới tính"><Option value="M">Nam</Option><Option value="F">Nữ</Option></Select></Form.Item></Col>
                     </Row>
                     <Row gutter={24}>
                         <Col span={12}><Form.Item name="dia_chi" label="Địa chỉ:" rules={[{ required: true }]}><Input placeholder="Địa chỉ" /></Form.Item></Col>

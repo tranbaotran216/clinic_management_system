@@ -1,0 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giới thiệu - Medical Clinic</title>
+    <link rel="stylesheet" href="{% static 'pages/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container navbar">
+            <div class="logo">
+                <img src="{% static 'pages/images/plus_sign.png' %}" alt="Medical Clinic Logo">
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <!-- SỬA CÁC URL ĐỂ KHÔNG DÙNG NAMESPACE -->
+                    <li><a href="{% url 'home' %}">Trang chủ</a></li>
+                    <li><a href="{% url 'services' %}">Dịch vụ</a></li>
+                    <li><a href="{% url 'about' %}" class="active">Giới thiệu</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons">
+                <!-- ================== SỬA LIÊN KẾT ĐẾN REACT ================== -->
+                <a href="/app/login" class="btn btn-login">Đăng nhập</a>
+                <a href="/app/register-appointment" class="btn btn-register">Đăng ký khám bệnh</a>
+                <!-- ============================================================= -->
+            </div>
+        </div>
+    </header>
+
+    <section class="page-title-section">
+        <div class="container">
+            <h2>Giới thiệu</h2>
+        </div>
+    </section>
+
+    <section class="about-us-section">
+        <div class="container">
+            <div class="about-card">
+                <div class="about-intro-paragraph">
+                    <p class="about-clinic-intro-text">
+                        <span style="color: #007bff; font-weight: 600;">Medical Clinic</span> là phòng khám tư nhân cung cấp dịch vụ khám chữa bệnh uy tín, an toàn và tận tâm. Với đội ngũ bác sĩ giàu kinh nghiệm và trang thiết bị hiện đại, chúng tôi cam kết mang đến trải nghiệm y tế chất lượng, nhanh chóng và hiệu quả cho mọi bệnh nhân.
+                    </p>
+                </div>
+
+                <div class="about-details-container">
+                    <div class="about-contact-info">
+                        <h4 class="about-heading">Giờ làm việc:</h4>
+                        <ul class="working-hours-list">
+                            <li>Thứ 2 – Thứ 6: 8:00 – 17:00</li>
+                            <li>Thứ 7: 8:00 – 12:00</li>
+                            <li>Chủ nhật & ngày lễ: Nghỉ</li>
+                        </ul>
+
+                        <h4 class="about-heading">Số điện thoại: <span style="color: #007bff;">0355 644 805</span></h4>
+                        <h4 class="about-heading">Địa chỉ: Khu phố 12, Linh Trung, TP. Thủ Đức</h4>
+                    </div>
+                    <div class="about-image-content">
+                        <img src="{% static 'pages/images/clinic.png' %}" alt="Hình ảnh tòa nhà phòng khám">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</body>
+</html>

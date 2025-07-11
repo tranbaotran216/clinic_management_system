@@ -10,7 +10,6 @@ from decimal import Decimal, InvalidOperation # Import Decimal
 class GioiTinh(models.TextChoices):
     NAM = 'M', _('Nam')
     NU = 'F', _('Nữ')
-    KHAC = 'O', _('Khác')
 
 # --- TaiKhoanManager ---
 class TaiKhoanManager(BaseUserManager):
@@ -178,6 +177,13 @@ class PKB(models.Model):
     benh_nhan = models.ForeignKey(BenhNhan, verbose_name=_('bệnh nhân'), on_delete=models.PROTECT, related_name='phieu_kham_benh')
     loai_benh_chuan_doan = models.ForeignKey(LoaiBenh, verbose_name=_('loại bệnh chẩn đoán'), on_delete=models.SET_NULL, null=True, blank=True, related_name='pkb_theo_loai_benh')
     ds_kham = models.OneToOneField(DSKham, on_delete=models.SET_NULL, null=True, blank=True, related_name='phieu_kham')
+    nguoi_lap_phieu = models.ForeignKey(
+        TaiKhoan, verbose_name=_('người lập phiếu'),
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='phieu_kham_da_lap'
+    )
     
     class Meta: verbose_name = _("Phiếu Khám Bệnh"); verbose_name_plural = _("Các Phiếu Khám Bệnh"); ordering = ['-ngay_kham', '-id']
     def __str__(self): return f"PKB {self.id} - {self.benh_nhan.ho_ten} - {self.ngay_kham}"

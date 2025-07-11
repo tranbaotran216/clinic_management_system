@@ -1,15 +1,23 @@
-from rest_framework import permissions, generics, status, views as drf_views, viewsets
-from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
-from django.contrib.auth.models import Group as DjangoGroup, Permission as DjangoPermission
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Sum, Count, F, DecimalField
-from django.db.models.functions import TruncDay
+import random
+import string
 from datetime import date
 from decimal import Decimal
+from django.conf import settings # <-- THIẾU IMPORT NÀY
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import Group as DjangoGroup, Permission as DjangoPermission
+from django.core.mail import send_mail # <-- ĐÃ THÊM IMPORT
+from django.db.models import Sum, Count, F, DecimalField
+from django.db.models.functions import TruncDay
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import permissions, generics, status, views as drf_views, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, AllowAny, DjangoModelPermissions
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import (
     TaiKhoan, BenhNhan, DSKham, PKB, ChiTietPKB,
@@ -28,17 +36,13 @@ from .serializers import (
     LoaiBenhSerializer, ThuocSerializer, DonViTinhSerializer, CachDungSerializer,
     QuyDinhValueSerializer, QuyDinhValueUpdateSerializer,
     # Serializers cho Báo cáo
-    BaoCaoSuDungThuocSerializer, BaoCaoDoanhThuNgaySerializer
+    BaoCaoSuDungThuocSerializer, BaoCaoDoanhThuNgaySerializer,
+    PasswordResetRequestSerializer
 )
-from .permissions import isManager
+
 from rest_framework.permissions import IsAuthenticated, AllowAny, DjangoModelPermissions
 from rest_framework.decorators import action
 from rest_framework.views import APIView
-
-
-# ===================================================================
-# == VIEWS CHO XÁC THỰC & NGƯỜI DÙNG HIỆN TẠI
-# ===================================================================
 
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginView(drf_views.APIView):
@@ -76,11 +80,6 @@ class DashboardSummaryView(drf_views.APIView):
             'daily_revenue': daily_revenue
         }, status=status.HTTP_200_OK)
 
-
-# ===================================================================
-# == VIEWSETS CHO QUẢN LÝ HỆ THỐNG
-# ===================================================================
-
 class UserViewSet(viewsets.ModelViewSet):
     queryset = TaiKhoan.objects.prefetch_related('groups').all().order_by('-id')
     permission_classes = [IsAuthenticated, DjangoModelPermissions]
@@ -90,9 +89,6 @@ class UserViewSet(viewsets.ModelViewSet):
         if self.action in ['update', 'partial_update']: return TaiKhoanUpdateSerializer
         return TaiKhoanPublicSerializer
     
-    # Có thể bỏ RegisterView và tích hợp vào đây nếu muốn, nhưng để riêng cũng tốt
-    # def perform_create(self, serializer): ...
-
 class GroupViewSet(viewsets.ModelViewSet):
     queryset = DjangoGroup.objects.all().order_by('name')
     permission_classes = [IsAuthenticated, DjangoModelPermissions]
@@ -115,10 +111,6 @@ class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PermissionSerializer
     permission_classes = [IsAuthenticated, DjangoModelPermissions]
 
-
-# ===================================================================
-# == VIEWSETS CHO NGHIỆP VỤ KHÁM BỆNH
-# ===================================================================
 
 class BenhNhanViewSet(viewsets.ModelViewSet):
     queryset = BenhNhan.objects.all().order_by('-id')
@@ -165,7 +157,10 @@ class PKBViewSet(viewsets.ModelViewSet):
         ds_kham_id = self.request.data.get('ds_kham_id')
         ds_kham_instance = DSKham.objects.filter(id=ds_kham_id).first()
         
-        pkb_instance = serializer.save(ds_kham=ds_kham_instance)
+        pkb_instance = serializer.save(
+            nguoi_lap_phieu=self.request.user, 
+            ds_kham=ds_kham_instance
+        )
         
         pkb_instance.tao_hoac_cap_nhat_hoa_don()
 
@@ -194,10 +189,6 @@ class HoaDonViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = HoaDon.objects.select_related('phieu_kham_benh__benh_nhan').all().order_by('-ngay_thanh_toan')
     serializer_class = HoaDonSerializer
     permission_classes = [IsAuthenticated, DjangoModelPermissions]
-
-# ===================================================================
-# == VIEWSETS CHO DANH MỤC & QUY ĐỊNH
-# ===================================================================
 
 class LoaiBenhViewSet(viewsets.ModelViewSet):
     queryset = LoaiBenh.objects.all().order_by('ten_loai_benh')
@@ -231,7 +222,7 @@ class QuyDinhValueViewSet(viewsets.ModelViewSet):
         return QuyDinhValueSerializer
 
 class MedicationUsageReportView(drf_views.APIView):
-    permission_classes = [IsAuthenticated, isManager] # Hoặc custom permission 'accounts.view_medication_report'
+    permission_classes = [IsAuthenticated] 
     def get(self, request, *args, **kwargs):
         month_str = request.query_params.get('month'); year_str = request.query_params.get('year'); search_term = request.query_params.get('search')
         try:
@@ -252,7 +243,7 @@ class MedicationUsageReportView(drf_views.APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class RevenueReportView(drf_views.APIView):
-    permission_classes = [IsAuthenticated, isManager] # Hoặc custom permission 'accounts.view_revenue_report'
+    permission_classes = [IsAuthenticated] # Hoặc custom permission 'accounts.view_revenue_report'
     def get(self, request, *args, **kwargs):
         try:
             month_str = request.query_params.get('month'); year_str = request.query_params.get('year')
@@ -284,3 +275,47 @@ class RevenueReportView(drf_views.APIView):
             })
         serializer = BaoCaoDoanhThuNgaySerializer(report_data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class PasswordResetRequestView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = PasswordResetRequestSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        
+        user = TaiKhoan.objects.filter(email__iexact=email).first()
+
+        if user:
+            
+            # 1. Tạo một mật khẩu ngẫu nhiên mới (8 ký tự)
+            new_password = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(8))
+            
+            # 2. Cập nhật mật khẩu mới cho người dùng
+            user.set_password(new_password)
+            user.save()
+            
+            # 3. Gửi email chứa tên đăng nhập và mật khẩu mới
+            subject = 'Mật khẩu mới cho tài khoản Phòng Mạch Medical Clinic'
+            message_body = (
+                f'Chào {user.ho_ten},\n\n'
+                f'Bạn đã yêu cầu đặt lại mật khẩu. Dưới đây là thông tin đăng nhập mới của bạn:\n\n'
+                f'   - Tên đăng nhập: {user.ten_dang_nhap}\n'
+                f'   - Mật khẩu mới: {new_password}\n\n'
+                f'Vui lòng đăng nhập bằng mật khẩu này và đổi lại mật khẩu trong trang thông tin cá nhân để đảm bảo an toàn.\n\n'
+                f'Trân trọng,\n'
+                f'Phòng Mạch Medical Clinic\n'
+            )
+            
+            try:
+                send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user.email])
+            except Exception as e:
+                # Ghi lại lỗi nếu gửi email thất bại
+                print(f"Lỗi khi gửi email reset mật khẩu: {e}")
+                # Có thể trả về lỗi cho người dùng hoặc vẫn trả về thành công để bảo mật
+                
+        return Response(
+            {"detail": "Vui lòng kiểm tra email, mật khẩu mới đã được gửi đi."},
+            status=status.HTTP_200_OK
+        )

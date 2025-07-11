@@ -1,28 +1,19 @@
-// frontend/src/components/App.js (Đã thêm route Báo cáo)
+// frontend/src/components/App.js
 
-// --- THƯ VIỆN REACT & ROUTER ---
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-
-// --- THƯ VIỆN GIAO DIỆN ---
-import { Spin, Typography } from 'antd';
-import { Link } from 'react-router-dom';
-
-// --- CORE COMPONENTS ---
+import { BrowserRouter, Navigate, Route, Routes, useLocation, Link } from 'react-router-dom';
+import { Spin, Typography, message, Button } from 'antd';
 import PrivateRoute from "./PrivateRoutes";
 import DashboardLayout from "./DashboardLayout";
-export const AuthContext = createContext(null);
 
-// --- PUBLIC PAGES ---
-import HomePage from "./HomePage";
-import Intro from "./Intro";
+// --- APP PAGES (Các trang do React quản lý) ---
 import LoginPage from "./LoginPage";
-import Services from "./Services";
 import UnAuthorized from "./UnAuthorized";
+import RegisterAppointmentPage from "./RegisterAppointmentPage";
 
 // --- DASHBOARD PAGES ---
 import AccountsPage from "./AccountsPage";
-import DashboardHomepage from "./DashboardHomepage";
+import DashboardHomepage from "./DashboardHomePage";
 import ExaminationManagementPage from "./ExaminationManagementPage";
 import MedicationSearchPage from "./MedicationSearchPage";
 import RegulationPage from "./RegulationPage";
@@ -30,13 +21,13 @@ import DiseasesPage from "./Regulations/DiseasesPage";
 import UnitsPage from "./Regulations/UnitsPage";
 import UsagesPage from "./Regulations/UsagesPage";
 import MedicinePage from "./Regulations/MedicinePage";
-import ReportsPage from './ReportsPage'; // ✅ BƯỚC 1: IMPORT COMPONENT MỚI
-import RegisterAppointmentPage from "./RegisterAppointmentPage";
+import ReportsPage from './ReportsPage';
 import ProfilePage from "./ProfilePage";
 
+export const AuthContext = createContext(null);
 const { Title } = Typography;
 
-// --- AUTH PROVIDER COMPONENT (Giữ nguyên) ---
+// --- AUTH PROVIDER COMPONENT ---
 const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);
     const [loadingAuth, setLoadingAuth] = useState(true);
@@ -44,19 +35,24 @@ const AuthProvider = ({ children }) => {
     const fetchCurrentUser = async () => {
         const token = localStorage.getItem('authToken');
         if (!token) {
-            setCurrentUser(null); setLoadingAuth(false); return;
+            setCurrentUser(null);
+            setLoadingAuth(false);
+            return;
         }
         try {
-            setLoadingAuth(true); 
+            setLoadingAuth(true);
             const response = await fetch('/api/auth/me/', { headers: { 'Authorization': `Bearer ${token}` } });
             if (response.ok) {
-                const data = await response.json(); setCurrentUser(data);
+                const data = await response.json();
+                setCurrentUser(data);
             } else {
-                localStorage.removeItem('authToken'); setCurrentUser(null);
+                localStorage.removeItem('authToken');
+                setCurrentUser(null);
             }
         } catch (error) {
             console.error("Lỗi khi fetch user:", error);
-            localStorage.removeItem('authToken'); setCurrentUser(null);
+            localStorage.removeItem('authToken');
+            setCurrentUser(null);
         } finally {
             setLoadingAuth(false);
         }
@@ -64,37 +60,37 @@ const AuthProvider = ({ children }) => {
 
     const login = async (credentials) => {
         try {
-            const response = await fetch('/api/login/', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
+            const response = await fetch('/api/auth/login/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(credentials)
             });
             if (response.ok) {
                 const data = await response.json();
                 localStorage.setItem('authToken', data.access);
                 await fetchCurrentUser();
-                return true;
+                return { success: true };
             }
             const errorData = await response.json().catch(() => ({}));
-            // Không set error state ở đây vì nó không tồn tại trong context này
-            // message.error(errorData.detail || errorData.error || "Tên đăng nhập hoặc mật khẩu không đúng.");
-            return false;
+            return { success: false, message: errorData.detail || "Tên đăng nhập hoặc mật khẩu không đúng." };
         } catch (error) {
             console.error("Lỗi đăng nhập:", error);
-            // message.error("Đã có lỗi xảy ra trong quá trình đăng nhập.");
-            return false;
+            return { success: false, message: "Lỗi kết nối đến máy chủ." };
         }
     };
 
-    const logout = async () => {
+    const logout = () => {
         localStorage.removeItem('authToken');
         setCurrentUser(null);
+        // Chuyển hướng về trang chủ của Django
+        window.location.href = '/'; 
     };
 
     useEffect(() => {
         fetchCurrentUser();
     }, []);
 
-    if (loadingAuth && !currentUser) {
+    if (loadingAuth) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
                 <Spin size="large" tip="Đang tải ứng dụng..." />
@@ -106,13 +102,17 @@ const AuthProvider = ({ children }) => {
     return (<AuthContext.Provider value={authContextValue}>{children}</AuthContext.Provider>);
 };
 
-// --- REQUIRE AUTH COMPONENT (Giữ nguyên) ---
+// --- REQUIRE AUTH COMPONENT ---
 const RequireAuth = ({ children }) => {
     const { currentUser, loadingAuth } = useContext(AuthContext);
     const location = useLocation();
 
     if (loadingAuth) {
-        return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><Spin tip="Đang xác thực..." size="large" /></div>;
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <Spin tip="Đang xác thực..." size="large" />
+            </div>
+        );
     }
 
     if (!currentUser) {
@@ -126,43 +126,34 @@ const RequireAuth = ({ children }) => {
 export default function App() {
     return (
         <AuthProvider>
-            <Router>
+            <BrowserRouter basename="/app">
                 <Routes>
-                    {/* ===== PUBLIC ROUTES ===== */}
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/services" element={<Services />} />
-                    <Route path="/intro" element={<Intro />} />
+                    {/* ===== CÁC ROUTE DO REACT QUẢN LÝ ===== */}
                     <Route path="/login" element={<LoginPage />} />
-                    <Route path="/unauthorized" element={<UnAuthorized />} />
                     <Route path="/register-appointment" element={<RegisterAppointmentPage />} />
+                    <Route path="/unauthorized" element={<UnAuthorized />} />
 
-                    {/* ===== DASHBOARD ROUTES (PROTECTED) ===== */}
+                    {/* ===== DASHBOARD ROUTES (ĐƯỢC BẢO VỆ) ===== */}
                     <Route path="/dashboard" element={<RequireAuth><DashboardLayout /></RequireAuth>}>
                         <Route index element={<DashboardHomepage />} />
-                        {/* trang Profile */}
                         <Route path="profile" element={<ProfilePage />} />
 
-                        {/* 1. Quản lý Tài khoản & Vai trò */}
                         <Route element={<PrivateRoute requiredPermissions={["accounts.view_taikhoan", "auth.view_group"]} />}>
                             <Route path="accounts" element={<AccountsPage />} />
                         </Route>
 
-                        {/* 2. Quản lý Khám bệnh */}
                         <Route element={<PrivateRoute requiredPermissions={["accounts.view_dskham", "accounts.view_pkb"]} />}>
                             <Route path="medical-records/*" element={<ExaminationManagementPage />} />
                         </Route>
                         
-                        {/* 3. Tra cứu thuốc */}
                         <Route element={<PrivateRoute requiredPermissions={["accounts.view_thuoc"]} />}>
                             <Route path="medications/search" element={<MedicationSearchPage />} />
                         </Route>
                         
-                        {/* 4. Báo cáo & Thống kê */}
                         <Route element={<PrivateRoute requiredPermissions={["accounts.view_hoadon"]} />}>
                             <Route path="reports" element={<ReportsPage />} />
                         </Route>
 
-                        {/* 5. Quản lý Quy định */}
                         <Route 
                             path="regulations"
                             element={ <PrivateRoute requiredPermissions={["accounts.change_quydinhvalue", "accounts.view_loaibenh", "accounts.view_donvitinh", "accounts.view_cachdung", "accounts.view_thuoc" ]} /> }
@@ -173,15 +164,22 @@ export default function App() {
                             <Route path="units" element={<UnitsPage />} />
                             <Route path="usages" element={<UsagesPage />} />
                         </Route>
-
-                        {/* Các route không dùng đến đã được xóa */}
                         
-                        <Route path="*" element={<div style={{padding: 20}}><Title level={2}>404 - Trang không tìm thấy</Title><Link to="/dashboard">Quay lại Trang chủ Dashboard</Link></div>} />
+                        <Route path="*" element={
+                            <div style={{padding: 24, textAlign: 'center'}}>
+                                <Title level={2}>404 - Không tìm thấy trang</Title>
+                                <p>Trang bạn đang tìm kiếm không tồn tại trong khu vực quản lý.</p>
+                                <Link to="/dashboard">
+                                    <Button type="primary">Quay lại Trang chủ Dashboard</Button>
+                                </Link>
+                            </div>
+                        } />
                     </Route>
 
-                    <Route path="*" element={<Navigate to="/" replace />} />
+                    {/* Bắt tất cả các URL không hợp lệ trong /app và chuyển hướng về trang login */}
+                    <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
-            </Router>
+            </BrowserRouter>
         </AuthProvider>
     );
 }
