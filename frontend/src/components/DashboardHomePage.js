@@ -41,14 +41,16 @@ const DashboardHomePage = () => {
     };
     
     useEffect(() => {
-        if (currentUser) {
-            setLoading(true);
+        setLoading(true);
+        fetchSummary();
+        const handlePkbCreated = () => {
             fetchSummary();
-            const handlePkbCreated = () => fetchSummary();
-            eventBus.on('pkb-created', handlePkbCreated);
-            return () => eventBus.off('pkb-created', handlePkbCreated);
         }
-    }, [currentUser]);
+        eventBus.on('pkbCreated', handlePkbCreated);
+        return () => {
+            eventBus.off('pkbCreated', handlePkbCreated);
+        }
+    }, []);
 
     if (loading) {
         return <div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" tip="Đang tải dữ liệu..." /></div>;
@@ -71,7 +73,7 @@ const DashboardHomePage = () => {
                         border: `1px solid ${token.colorBorderSecondary}`
                     }}>
                         <Space direction="vertical" align="center" style={{ width: '100%' }}>
-                            <Avatar size={64} icon={<UserOutlined />} style={{ backgroundColor: token.colorBgContainer, color: token.colorPrimary, border: `2px solid ${token.colorPrimaryBorder}` }} />
+                            <Avatar size={64} src={currentUser.avatar} icon={!currentUser.avatar && <UserOutlined />} style={{ backgroundColor: token.colorBgContainer, color: token.colorPrimary, border: `2px solid ${token.colorPrimaryBorder}` }} />
                             <Title level={4} style={{ marginTop: 16, marginBottom: 0, color: token.colorTextHeading }}>Chào Mừng Bạn!</Title>
                             <Text style={{ color: token.colorTextSecondary }}>{currentUser?.ho_ten}</Text>
                         </Space>

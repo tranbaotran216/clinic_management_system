@@ -27,7 +27,7 @@ const generateMenuItems = (configItems, userPermissions = []) => {
     return configItems
         .filter(item => !item.permission || userPermissions.includes(item.permission))
         .map(item => ({
-            key: item.path || 'home', // Dùng path làm key
+            key: item.path || 'home', 
             icon: item.icon,
             label: <Link to={item.path}>{item.labelText}</Link>,
         }));
@@ -63,7 +63,6 @@ const DashboardLayout = () => {
 
     const menuItems = generateMenuItems(rawMenuConfig, currentUser.permissions);
     
-    // Logic tạo Breadcrumb và activeMenuKey
     const pathSnippets = location.pathname.split('/').filter(i => i && i !== 'app' && i !== 'dashboard');
     const breadcrumbNameMap = {
       'accounts': 'Quản lý tài khoản', 'medical-records': 'Quản lý khám bệnh', 'medications': 'Thuốc', 'search': 'Tra cứu',
@@ -121,7 +120,7 @@ const DashboardLayout = () => {
           </Content>
           
           <Footer style={{ textAlign: 'center' }}>
-            Clinic Management System Created By SE104.P23 Group 9 ©{new Date().getFullYear()}
+            Created By SE104.P23 Group 9 ©{new Date().getFullYear()}
           </Footer>
         </Layout>
       </Layout>
