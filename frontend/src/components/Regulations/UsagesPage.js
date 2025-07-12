@@ -180,7 +180,7 @@ const UsagesPage = () => {
                     <Form.Item
                         name="ten_cach_dung"
                         label="Tên cách dùng"
-                        rules={[{ required: true, message: 'Vui lòng nhập tên cách dùng' }]}
+                        rules={[{ required: true, message: 'Vui lòng nhập tên cách dùng!' }]}
                     >
                         <Input placeholder="Ví dụ: Ngày uống 2 lần sau ăn" />
                     </Form.Item>

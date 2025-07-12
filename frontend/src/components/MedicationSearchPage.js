@@ -267,7 +267,7 @@ const MedicationSearchPage = () => {
 
     return (
         <div style={{ padding: 24 }}>
-            <Title level={3}>Tra cứu thông tin thuốc</Title>
+            <Title level={3}>Tra cứu thuốc</Title>
             <Card>
                 <Row gutter={[16, 16]} justify="space-between" align="middle">
                     <Col>

@@ -26,7 +26,7 @@ const ExaminationManagementPage = () => {
 
     return (
         <div style={{ padding: '0 24px' }}>
-            <Title level={3} style={{ marginBottom: 24 }}>Quản lý Khám Bệnh</Title>
+            <Title level={3} style={{ marginBottom: 24 }}>Quản lý khám bệnh</Title>
             <Tabs defaultActiveKey="1" items={items} type="card" />
         </div>
     );

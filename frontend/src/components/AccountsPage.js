@@ -194,7 +194,7 @@ const UserManagementTab = () => {
                 <Col xs={24} md={14} style={{ textAlign: 'right', marginTop: '10px' }}>
                     <Space>
                         <Button icon={<ReloadOutlined />} onClick={fetchData} loading={loading}>Tải lại</Button>
-                        {canAddAccounts && <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>Thêm người dùng</Button>}
+                        {canAddAccounts && <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>Thêm tài khoản</Button>}
                     </Space>
                 </Col>
             </Row>
@@ -297,15 +297,15 @@ const AccountsPage = () => {
     const canViewRoles = currentUser?.permissions?.includes('auth.view_group');
 
     const tabItems = [
-        { key: 'users', label: 'Quản lý Người dùng', children: <UserManagementTab /> },
+        { key: 'users', label: 'Tài khoản', children: <UserManagementTab /> },
     ];
     if (canViewRoles) {
-        tabItems.push({ key: 'roles', label: 'Quản lý Vai trò & Phân quyền', children: <RolesPage /> });
+        tabItems.push({ key: 'roles', label: 'Vai trò & Phân quyền', children: <RolesPage /> });
     }
 
     return (
         <div>
-            <Title level={3} style={{ marginBottom: 24 }}>Quản lý Hệ thống</Title>
+            <Title level={3} style={{ marginBottom: 24 }}>Quản lý tài khoản</Title>
             <Tabs defaultActiveKey="users" type="card" items={tabItems} />
         </div>
     );

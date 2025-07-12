@@ -12,7 +12,6 @@ const PrintableInvoice = ({ record }) => {
     const invoice = record.hoa_don_lien_ket;
     const patient = record.benh_nhan;
 
-    // --- TOÀN BỘ THAY ĐỔI NẰM Ở ĐÂY ---
     const printStyles = `
         /* @page là quy tắc để điều khiển chính trang giấy in */
         @page {
@@ -78,8 +77,8 @@ const PrintableInvoice = ({ record }) => {
             
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <Title level={4}>PHÒNG MẠCH MEDICAL CLINIC</Title>
-                <Text>Địa chỉ: 123 Đường ABC, Quận 1, TP.HCM</Text><br />
-                <Text>SĐT: 0123.456.789</Text>
+                <Text>Địa chỉ: Khu phố 12, Linh Trung, TP. Thủ Đức</Text><br />
+                <Text>SĐT: 0355.644.805</Text>
             </div>
             <Title level={3} style={{ textAlign: 'center' }}>HÓA ĐƠN THANH TOÁN</Title>
             <Title level={5} style={{ textAlign: 'center', marginTop: -10, marginBottom: 24 }}>(Phiếu khám #{record.id})</Title>
@@ -110,8 +109,20 @@ const PrintableInvoice = ({ record }) => {
                 <Descriptions.Item label={<Text strong>TỔNG CỘNG THANH TOÁN</Text>}><Text strong style={{ color: '#ff4d4f', fontSize: 16 }}>{new Intl.NumberFormat('vi-VN').format(invoice.tong_tien)} VND</Text></Descriptions.Item>
             </Descriptions>
             <div style={{ marginTop: 48, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
-                <div><Text strong>Người lập phiếu</Text><br /><br /><br />(Ký, ghi rõ họ tên)</div>
-                <div><Text strong>Người thanh toán</Text><br /><br /><br />(Ký, ghi rõ họ tên)</div>
+                <div>
+                    <Text strong>Người lập phiếu</Text>
+                    <br /><br /><br />
+                    <Text strong>{record.nguoi_lap_phieu?.ho_ten || '.........................'}</Text>
+                    <br/>
+                    <Text type="secondary" style={{fontStyle: 'italic'}}>(Ký tên)</Text>
+                </div>
+                <div>
+                    <Text strong>Người thanh toán</Text>
+                    <br /><br /><br />
+                    <Text strong>{record.benh_nhan?.ho_ten || '.........................'}</Text>
+                    <br/>
+                    <Text type="secondary" style={{fontStyle: 'italic'}}>(Ký tên)</Text>
+                </div>
             </div>
         </div>
     );

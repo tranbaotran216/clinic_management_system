@@ -154,15 +154,15 @@ const MedicinePage = () => {
             <Table columns={columns} dataSource={filteredMedicines} rowKey="id" bordered loading={loading} style={{ marginTop: 16 }} scroll={{ x: 'max-content' }}/>
             <Modal title={editingMedicine ? 'Sửa thông tin thuốc' : 'Thêm thuốc mới'} open={isModalVisible} onOk={handleOk} onCancel={() => setIsModalVisible(false)} destroyOnClose>
                 <Form form={form} layout="vertical" style={{ marginTop: 24 }} onFinish={handleOk}>
-                    <Form.Item name="ten_thuoc" label="Tên thuốc (*)" rules={[{ required: true }]}><Input /></Form.Item>
-                    <Form.Item name="cach_dung_mac_dinh_id" label="Cách dùng mặc định"><Select placeholder="Chọn cách dùng" allowClear>{usages.map(u => <Option key={u.id} value={u.id}>{u.ten_cach_dung}</Option>)}</Select></Form.Item>
+                    <Form.Item name="ten_thuoc" label="Tên thuốc (*)" rules={[{ required: true, message: 'Vui lòng nhập tên thuốc!' }]}><Input /></Form.Item>
+                    <Form.Item name="cach_dung_mac_dinh_id" label="Cách dùng mặc định"  rules={[{ required: true, message: 'Vui lòng chọn cách dùng mặc định!' }]}><Select placeholder="Chọn cách dùng" allowClear>{usages.map(u => <Option key={u.id} value={u.id}>{u.ten_cach_dung}</Option>)}</Select></Form.Item>
                     <Row gutter={16}>
-                        <Col span={12}><Form.Item name="don_vi_tinh_id" label="Đơn vị tính (*)" rules={[{ required: true }]}><Select placeholder="Chọn đơn vị tính">{units.map(u => <Option key={u.id} value={u.id}>{u.ten_don_vi_tinh}</Option>)}</Select></Form.Item></Col>
-                        <Col span={12}><Form.Item name="han_su_dung" label="Hạn sử dụng"><DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" /></Form.Item></Col>
+                        <Col span={12}><Form.Item name="don_vi_tinh_id" label="Đơn vị tính (*)" rules={[{ required: true, message: 'Vui lòng nhập đơn vị tính!' }]}><Select placeholder="Chọn đơn vị tính">{units.map(u => <Option key={u.id} value={u.id}>{u.ten_don_vi_tinh}</Option>)}</Select></Form.Item></Col>
+                        <Col span={12}><Form.Item name="han_su_dung" label="Hạn sử dụng"  rules={[{ required: true, message: 'Vui lòng chọn hạn sử dụng!' }]}><DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" /></Form.Item></Col>
                     </Row>
                     <Row gutter={16}>
-                        <Col span={12}><Form.Item name="so_luong_ton" label="Số lượng tồn (*)" rules={[{ required: true }]}><InputNumber min={0} style={{ width: '100%' }} /></Form.Item></Col>
-                        <Col span={12}><Form.Item name="don_gia" label="Đơn giá (VND) (*)" rules={[{ required: true }]}><InputNumber min={0} style={{ width: '100%' }} formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} parser={(v) => v.replace(/\$\s?|(,*)/g, '')} /></Form.Item></Col>
+                        <Col span={12}><Form.Item name="so_luong_ton" label="Số lượng tồn (*)" rules={[{ required: true, message: 'Vui lòng nhập số lượng tồn!'  }]}><InputNumber min={0} style={{ width: '100%' }} /></Form.Item></Col>
+                        <Col span={12}><Form.Item name="don_gia" label="Đơn giá (VND) (*)" rules={[{ required: true, message: 'Vui lòng nhập đơn giá!'  }]}><InputNumber min={0} style={{ width: '100%' }} formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} parser={(v) => v.replace(/\$\s?|(,*)/g, '')} /></Form.Item></Col>
                     </Row>
                 </Form>
             </Modal>

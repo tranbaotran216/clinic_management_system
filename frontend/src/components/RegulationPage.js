@@ -130,9 +130,9 @@ const RegulationPage = () => {
 
     return (
         <div style={{ padding: '24px' }}>
-            <Title level={3}>Quản lý Quy định & Danh mục</Title>
+            <Title level={3}>Quản lý quy định</Title>
             
-            <Title level={4} style={{ marginTop: '32px', marginBottom: '16px' }}>Các quy định chung</Title>
+            <Title level={4} style={{ marginTop: '32px', marginBottom: '16px' }}>Quy định chung</Title>
             {loading ? <Spin /> : (
                 <Row gutter={[24, 24]}>
                     <Col xs={24} sm={12} md={8} lg={6}>
@@ -152,7 +152,7 @@ const RegulationPage = () => {
                 </Row>
             )}
 
-            <Title level={4} style={{ marginTop: '48px', marginBottom: '16px' }}>Các danh mục hệ thống</Title>
+            <Title level={4} style={{ marginTop: '48px', marginBottom: '16px' }}>Danh mục hệ thống</Title>
             <Row gutter={[24, 24]}>
                 <Col xs={24} sm={12} md={8} lg={6}>
                     <Card hoverable style={{ borderRadius: 12, textAlign: 'center' }} onClick={() => handleNavigate('/dashboard/regulations/medicines')}>

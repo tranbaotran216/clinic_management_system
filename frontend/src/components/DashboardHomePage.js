@@ -118,7 +118,7 @@ const DashboardHomePage = () => {
             {/* Hàng 2: Các biểu đồ */}
             <Row gutter={[24, 24]}>
                 <Col xs={24} lg={16}>
-                    <Card title="Thống kê bệnh nhân trong 7 ngày qua">
+                    <Card title="Thống kê bệnh nhân (Tuần)">
                         <ResponsiveContainer width="100%" height={300}>
                             <LineChart data={summaryData.weekly_patient_stats} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                                 <CartesianGrid stroke={token.colorBorderSecondary} />
@@ -132,7 +132,7 @@ const DashboardHomePage = () => {
                     </Card>
                 </Col>
                 <Col xs={24} lg={8}>
-                    <Card title="Top 5 bệnh phổ biến (tuần)">
+                    <Card title="Top 5 bệnh phổ biến (Tuần)">
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                                 <Pie

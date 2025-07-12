@@ -19,28 +19,91 @@ const getAuthHeaders = () => {
     return headers;
 };
 
+// --- ĐÃ CẬP NHẬT COMPONENT NÀY ---
 const PKBDetailView = ({ pkbData }) => {
     if (!pkbData) return null;
+
+    // --- THÊM CSS ĐỂ IN ẤN ---
+    const printStyles = `
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+
+        @media print {
+            body {
+                font-family: 'Times New Roman', Times, serif;
+                font-size: 13pt;
+            }
+            
+            /* Quy tắc ẩn/hiện kinh điển */
+            body * {
+                visibility: hidden;
+            }
+            .printable-pkb, .printable-pkb * {
+                visibility: visible;
+            }
+            .printable-pkb {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+
+            /* Tinh chỉnh font chữ cho đẹp */
+            .printable-pkb .ant-typography,
+            .printable-pkb .ant-descriptions-item-label,
+            .printable-pkb .ant-descriptions-item-content,
+            .printable-pkb .ant-table {
+                font-size: 13pt !important;
+                color: #000 !important;
+            }
+
+            .printable-pkb .pkb-title { /* Tiêu đề chính */
+                font-size: 22pt !important;
+                font-weight: bold;
+                text-align: center;
+            }
+             .printable-pkb .pkb-subtitle { /* Tiêu đề phụ */
+                font-size: 14pt !important;
+                font-weight: bold;
+                text-align: center;
+            }
+        }
+    `;
+
     return (
-        <div style={{ padding: '8px' }}>
-            <Descriptions bordered column={2} size="small" style={{ marginBottom: 24 }}>
-                <Descriptions.Item label="Họ tên">{pkbData.benh_nhan.ho_ten}</Descriptions.Item>
-                <Descriptions.Item label="Ngày khám">{dayjs(pkbData.ngay_kham).format('DD/MM/YYYY')}</Descriptions.Item>
-                <Descriptions.Item label="Triệu chứng" span={2}>{pkbData.trieu_chung}</Descriptions.Item>
-                <Descriptions.Item label="Dự đoán bệnh" span={2}>{pkbData.loai_benh_chuan_doan?.ten_loai_benh || 'Chưa có'}</Descriptions.Item>
-                <Descriptions.Item label="Người lập phiếu">{pkbData.nguoi_lap_phieu?.ho_ten || 'Chưa có thông tin'}</Descriptions.Item>
-            </Descriptions>
-            <Title level={5}>Đơn thuốc chi tiết</Title>
-            <Table
-                dataSource={pkbData.chi_tiet_don_thuoc}
-                rowKey="id" size="small" pagination={false} bordered
-                columns={[
-                    { title: 'Tên thuốc', dataIndex: ['thuoc', 'ten_thuoc'] },
-                    { title: 'Số lượng', dataIndex: 'so_luong_ke', align: 'center' },
-                    { title: 'Đơn vị', dataIndex: ['thuoc', 'don_vi_tinh', 'ten_don_vi_tinh'] },
-                    { title: 'Cách dùng', dataIndex: ['cach_dung_chi_dinh', 'ten_cach_dung'] },
-                ]}
-            />
+        // Thêm class "printable-pkb" và thẻ style
+        <div className="printable-pkb">
+            <style>{printStyles}</style>
+            
+            <Title level={3} className="pkb-title">PHIẾU KHÁM BỆNH</Title>
+            <Title level={5} className="pkb-subtitle" style={{marginTop: -10, marginBottom: 24}}>(Mã số: {pkbData.id})</Title>
+
+            <div style={{ padding: '8px' }}>
+                <Descriptions bordered column={2} size="small" style={{ marginBottom: 24 }}>
+                    <Descriptions.Item label="Họ tên">{pkbData.benh_nhan.ho_ten}</Descriptions.Item>
+                    <Descriptions.Item label="Ngày khám">{dayjs(pkbData.ngay_kham).format('DD/MM/YYYY')}</Descriptions.Item>
+                    <Descriptions.Item label="Triệu chứng" span={2}>{pkbData.trieu_chung}</Descriptions.Item>
+                    <Descriptions.Item label="Dự đoán bệnh" span={2}>{pkbData.loai_benh_chuan_doan?.ten_loai_benh || 'Chưa có'}</Descriptions.Item>
+                    <Descriptions.Item label="Người lập phiếu" span={2}>{pkbData.nguoi_lap_phieu?.ho_ten || 'Chưa có thông tin'}</Descriptions.Item>
+                </Descriptions>
+                <Title level={5}>Đơn thuốc chi tiết</Title>
+                <Table
+                    dataSource={pkbData.chi_tiet_don_thuoc}
+                    rowKey="id" size="small" pagination={false} bordered
+                    columns={[
+                        { title: 'Tên thuốc', dataIndex: ['thuoc', 'ten_thuoc'] },
+                        { title: 'Số lượng', dataIndex: 'so_luong_ke', align: 'center' },
+                        { title: 'Đơn vị', dataIndex: ['thuoc', 'don_vi_tinh', 'ten_don_vi_tinh'] },
+                        { title: 'Cách dùng', dataIndex: ['cach_dung_chi_dinh', 'ten_cach_dung'] },
+                    ]}
+                />
+                 <div style={{ marginTop: 48, textAlign: 'right', marginRight: '5%' }}>
+                    <Text strong>Bác sĩ khám bệnh</Text><br /><br /><br /><br />
+                    <Text strong>{pkbData.nguoi_lap_phieu?.ho_ten || '(Chưa có tên)'}</Text>
+                </div>
+            </div>
         </div>
     );
 };
@@ -54,8 +117,6 @@ const MedicalRecordListPage = () => {
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [searchText, setSearchText] = useState('');
     const navigate = useNavigate();
-
-    // Đã xóa toàn bộ logic phức tạp của react-to-print (useRef, useEffect, useState isPrintingReady)
 
     const canView = currentUser?.permissions?.includes('accounts.view_pkb');
     const canViewInvoice = currentUser?.permissions?.includes('accounts.view_hoadon');
@@ -134,11 +195,31 @@ const MedicalRecordListPage = () => {
 
             <Table columns={columns} dataSource={filteredRecords} loading={loading} rowKey="id" bordered style={{ marginTop: 16 }} scroll={{ x: 'max-content' }} />
 
-            <Modal title={`Chi Tiết Phiếu Khám Bệnh #${selectedRecord?.id}`} open={isDetailModalVisible} onCancel={handleModalClose} footer={null} width={800} destroyOnClose>
+            {/* --- ĐÃ CẬP NHẬT MODAL NÀY --- */}
+            <Modal
+                title={`Chi Tiết Phiếu Khám Bệnh #${selectedRecord?.id}`}
+                open={isDetailModalVisible}
+                onCancel={handleModalClose}
+                width={800}
+                destroyOnClose
+                footer={[
+                    <Button key="back" onClick={handleModalClose}>
+                        Đóng
+                    </Button>,
+                    <Button
+                        key="print-pkb"
+                        type="primary"
+                        icon={<PrinterOutlined />}
+                        onClick={() => window.print()}
+                    >
+                        In / Lưu PDF
+                    </Button>,
+                ]}
+            >
                 <PKBDetailView pkbData={selectedRecord} />
             </Modal>
 
-            {/* Modal hóa đơn giờ đã được đơn giản hóa tối đa */}
+            {/* Modal hóa đơn giữ nguyên */}
             <Modal
                 title={`Hóa đơn cho Phiếu khám #${selectedRecord?.id}`}
                 open={isInvoiceModalVisible}
@@ -153,14 +234,12 @@ const MedicalRecordListPage = () => {
                         key="print"
                         type="primary"
                         icon={<PrinterOutlined />}
-                        // Chỉ cần gọi hàm in của trình duyệt, cực kỳ đơn giản và đáng tin cậy
                         onClick={() => window.print()}
                     >
                         In / Lưu PDF
                     </Button>,
                 ]}
             >
-                {/* Component PrintableInvoice sẽ tự xử lý việc ẩn/hiện khi in thông qua CSS */}
                 <PrintableInvoice record={selectedRecord} />
             </Modal>
         </div>
