@@ -298,8 +298,8 @@ const WaitingListPage = () => {
                             <Col span={12}><Form.Item name="ngay_kham" label="Ngày khám:"><DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" disabled /></Form.Item></Col>
                         </Row>
                         <Row gutter={24}>
-                            <Col span={12}><Form.Item name="trieu_chung" label="Triệu chứng (*):" rules={[{ required: true }]}><Input.TextArea rows={1} placeholder="Nhập triệu chứng" /></Form.Item></Col>
-                            <Col span={12}><Form.Item name="loai_benh_chuan_doan_id" label="Dự đoán loại bệnh (*):" rules={[{ required: true }]}><Select placeholder="Chọn loại bệnh">{diseases.map(d => <Option key={d.id} value={d.id}>{d.ten_loai_benh}</Option>)}</Select></Form.Item></Col>
+                            <Col span={12}><Form.Item name="trieu_chung" label="Triệu chứng (*):" rules={[{ required: true, message: 'Vui lòng nhập triệu chứng!' }]}><Input.TextArea rows={1} placeholder="Nhập triệu chứng" /></Form.Item></Col>
+                            <Col span={12}><Form.Item name="loai_benh_chuan_doan_id" label="Chẩn đoán bệnh (*):" rules={[{ required: true, message: 'Vui lòng nhập tên bệnh được chẩn đoán!' }]}><Select placeholder="Chọn loại bệnh">{diseases.map(d => <Option key={d.id} value={d.id}>{d.ten_loai_benh}</Option>)}</Select></Form.Item></Col>
                         </Row>
                         <Title level={5} style={{ marginTop: 16, marginBottom: 16 }}>Đơn thuốc</Title>
                         <PrescriptionTable form={pkbForm} medicines={medicines} usages={usages} />

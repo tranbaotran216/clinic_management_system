@@ -177,7 +177,7 @@ const UnitsPage = () => {
                     <Form.Item
                         name="ten_don_vi_tinh"
                         label="Tên đơn vị tính"
-                        rules={[{ required: true, message: 'Vui lòng nhập tên đơn vị tính' }]}
+                        rules={[{ required: true, message: 'Vui lòng nhập tên đơn vị!' }]}
                     >
                         <Input placeholder="Ví dụ: Viên, Chai, Vỉ..." />
                     </Form.Item>

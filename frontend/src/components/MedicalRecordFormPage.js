@@ -134,12 +134,12 @@ const MedicalRecordFormPage = ({ mode }) => {
                         <>
                             {fields.map(({ key, name, ...restField }) => (
                                 <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-                                    <Form.Item {...restField} name={[name, 'thuoc_id']} rules={[{ required: true, message: 'Chọn thuốc' }]} style={{width: '300px'}}>
+                                    <Form.Item {...restField} name={[name, 'thuoc_id']} rules={[{ required: true, message: 'Chọn thuốc!' }]} style={{width: '300px'}}>
                                         <Select showSearch placeholder="Chọn thuốc" optionFilterProp="children">
                                             {thuocs.map(t => <Option key={t.id} value={t.id}>{t.ten_thuoc}</Option>)}
                                         </Select>
                                     </Form.Item>
-                                    <Form.Item {...restField} name={[name, 'so_luong_ke']} rules={[{ required: true, message: 'Nhập SL' }]}>
+                                    <Form.Item {...restField} name={[name, 'so_luong_ke']} rules={[{ required: true, message: 'Nhập số lượng!' }]}>
                                         <Input type="number" placeholder="Số lượng" style={{width: '100px'}} />
                                     </Form.Item>
                                     <Form.Item {...restField} name={[name, 'cach_dung_chi_dinh_id']} style={{width: '250px'}}>

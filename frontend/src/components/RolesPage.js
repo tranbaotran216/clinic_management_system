@@ -223,7 +223,7 @@ const RolesPage = () => {
 
             <Modal title={editingRole ? `Sửa tên vai trò` : "Thêm Vai trò mới"} open={isRoleModalVisible} onCancel={() => setIsRoleModalVisible(false)} destroyOnHidden footer={null}>
                 <Form form={roleForm} layout="vertical" onFinish={handleRoleFormSubmit} style={{ marginTop: '24px' }}>
-                    <Form.Item name="name" label="Tên Vai trò" rules={[{ required: true }]}><Input placeholder="Ví dụ: Bác sĩ, Lễ tân" /></Form.Item>
+                    <Form.Item name="name" label="Tên Vai trò" rules={[{ required: true, message: 'Vui lòng nhập tên vai trò!' }]}><Input placeholder="Ví dụ: Bác sĩ, Lễ tân" /></Form.Item>
                     <Form.Item style={{ textAlign: 'right' }}><Space><Button onClick={() => setIsRoleModalVisible(false)}>Hủy</Button><Button type="primary" htmlType="submit" loading={isSubmitting}>Lưu</Button></Space></Form.Item>
                 </Form>
             </Modal>

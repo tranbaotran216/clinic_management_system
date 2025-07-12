@@ -176,7 +176,7 @@ const DiseasesPage = () => {
                     <Form.Item
                         name="ten_loai_benh"
                         label="Tên loại bệnh"
-                        rules={[{ required: true, message: 'Vui lòng nhập tên loại bệnh' }]}
+                        rules={[{ required: true, message: 'Vui lòng nhập tên loại bệnh!' }]}
                     >
                         <Input placeholder="Ví dụ: Cảm cúm, Sốt siêu vi..." />
                     </Form.Item>
