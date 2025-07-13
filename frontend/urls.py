@@ -1,3 +1,4 @@
+#frontend/urls.py
 from django.urls import path, re_path # Thêm re_path
 from .views import index
 

@@ -53,6 +53,7 @@ class TaiKhoan(AbstractBaseUser, PermissionsMixin):
     ten_dang_nhap = models.CharField(_('tên đăng nhập'), max_length=150, unique=True)
     is_active = models.BooleanField(_('kích hoạt'), default=True)
     is_staff = models.BooleanField(_('nhân viên'), default=False, help_text=_('Chỉ định user có thể đăng nhập vào trang admin hay không.'))
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, default='avatars/default_avatar.jpg')
     groups = models.ManyToManyField(
         DjangoGroup, verbose_name=_('các vai trò'), blank=True,
         related_name="tai_khoan_groups", # Đổi related_name để rõ ràng hơn

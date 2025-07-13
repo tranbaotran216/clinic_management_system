@@ -2,14 +2,19 @@ import random
 import string
 from datetime import date
 from decimal import Decimal
-from django.conf import settings # <-- THIẾU IMPORT NÀY
+from django.conf import settings 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Group as DjangoGroup, Permission as DjangoPermission
-from django.core.mail import send_mail # <-- ĐÃ THÊM IMPORT
+from django.core.mail import send_mail 
 from django.db.models import Sum, Count, F, DecimalField
 from django.db.models.functions import TruncDay
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Count, Sum, F, DecimalField
+from django.db.models.functions import TruncDay, Coalesce
+
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, generics, status, views as drf_views, viewsets
@@ -37,7 +42,7 @@ from .serializers import (
     QuyDinhValueSerializer, QuyDinhValueUpdateSerializer,
     # Serializers cho Báo cáo
     BaoCaoSuDungThuocSerializer, BaoCaoDoanhThuNgaySerializer,
-    PasswordResetRequestSerializer
+    PasswordResetRequestSerializer, ChangePasswordSerializer
 )
 
 from rest_framework.permissions import IsAuthenticated, AllowAny, DjangoModelPermissions
@@ -67,17 +72,57 @@ class CurrentUserDetailView(drf_views.APIView):
         serializer = TaiKhoanPublicSerializer(request.user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+import pytz
+
 class DashboardSummaryView(drf_views.APIView):
     permission_classes = [IsAuthenticated]
+    
     def get(self, request, *args, **kwargs):
-        today = date.today()
+        vietnam_tz = pytz.timezone('Asia/Ho_Chi_Minh')
+
+        today = timezone.now().astimezone(vietnam_tz).date()
+        
+        seven_days_ago = today - timedelta(days=6)
+
         daily_appointments = DSKham.objects.filter(ngay_kham=today).count()
-        daily_revenue = HoaDon.objects.filter(ngay_thanh_toan__date=today).aggregate(
-            total=Sum(F('tien_kham') + F('tien_thuoc'))
-        )['total'] or 0
+        
+        daily_revenue_val = HoaDon.objects.filter(ngay_thanh_toan__date=today).aggregate(
+            total=Coalesce(Sum(F('tien_kham') + F('tien_thuoc')), Decimal(0), output_field=DecimalField())
+        )['total']
+        
+        top_employee_data = PKB.objects.filter(ngay_kham__gte=seven_days_ago)\
+                                       .values('nguoi_lap_phieu__ho_ten')\
+                                       .annotate(pkb_count=Count('id'))\
+                                       .order_by('-pkb_count')\
+                                       .first()
+
+        weekly_patient_stats = DSKham.objects.filter(ngay_kham__gte=seven_days_ago)\
+                                         .annotate(day=TruncDay('ngay_kham'))\
+                                         .values('day')\
+                                         .annotate(patient_count=Count('id'))\
+                                         .order_by('day')
+
+        top_diseases_stats = PKB.objects.filter(ngay_kham__gte=seven_days_ago)\
+                                          .exclude(loai_benh_chuan_doan__isnull=True)\
+                                          .values('loai_benh_chuan_doan__ten_loai_benh')\
+                                          .annotate(disease_count=Count('id'))\
+                                          .order_by('-disease_count')[:5]
+
+        weekly_stats_formatted = [
+            {'date': item['day'].strftime('%d/%m'), 'so_benh_nhan': item['patient_count']}
+            for item in weekly_patient_stats
+        ]
+        top_diseases_formatted = [
+            {'name': item['loai_benh_chuan_doan__ten_loai_benh'], 'value': item['disease_count']}
+            for item in top_diseases_stats
+        ]
+
         return Response({
             'daily_appointments': daily_appointments,
-            'daily_revenue': daily_revenue
+            'daily_revenue': daily_revenue_val,
+            'top_employee_week': top_employee_data,
+            'weekly_patient_stats': weekly_stats_formatted,
+            'top_diseases_stats': top_diseases_formatted,
         }, status=status.HTTP_200_OK)
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -243,7 +288,7 @@ class MedicationUsageReportView(drf_views.APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class RevenueReportView(drf_views.APIView):
-    permission_classes = [IsAuthenticated] # Hoặc custom permission 'accounts.view_revenue_report'
+    permission_classes = [IsAuthenticated] 
     def get(self, request, *args, **kwargs):
         try:
             month_str = request.query_params.get('month'); year_str = request.query_params.get('year')
@@ -319,3 +364,28 @@ class PasswordResetRequestView(generics.GenericAPIView):
             {"detail": "Vui lòng kiểm tra email, mật khẩu mới đã được gửi đi."},
             status=status.HTTP_200_OK
         )
+        
+class ChangePasswordView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChangePasswordSerializer
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        user_object = self.get_object()
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        
+        # is_valid sẽ chạy các hàm validate trong serializer
+        serializer.is_valid(raise_exception=True)
+
+        # Nếu dữ liệu hợp lệ, thực hiện đổi mật khẩu
+        user_object.set_password(serializer.validated_data.get("new_password"))
+        user_object.save()
+        
+        # Gửi email thông báo (tùy chọn)
+        subject = 'Thông báo thay đổi mật khẩu'
+        message_body = f'Chào {user_object.ho_ten},\n\nMật khẩu của bạn tại Phòng Mạch Medical Clinic đã được thay đổi thành công vào lúc {timezone.now().strftime("%H:%M %d/%m/%Y")}.\n\nNếu bạn không thực hiện hành động này, vui lòng liên hệ với chúng tôi ngay lập tức.\n\nTrân trọng.'
+        send_mail(subject, message_body, settings.DEFAULT_FROM_EMAIL, [user_object.email])
+
+        return Response({"detail": "Đổi mật khẩu thành công."}, status=status.HTTP_200_OK)

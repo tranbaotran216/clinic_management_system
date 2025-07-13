@@ -29,15 +29,21 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
 class TaiKhoanPublicSerializer(serializers.ModelSerializer):
     groups = GroupSerializer(many=True, read_only=True)
     permissions = serializers.SerializerMethodField()
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = TaiKhoan
-        fields = ['id', 'ho_ten', 'email', 'ten_dang_nhap', 'is_active', 'is_staff', 'is_superuser', 'groups', 'permissions']
+        fields = ['id', 'ho_ten', 'email', 'ten_dang_nhap', 'is_active', 'is_staff', 'is_superuser', 'groups', 'permissions', 'avatar', 'avatar_url']
     def get_permissions(self, obj: TaiKhoan) -> list:
         return sorted(list(obj.get_all_permissions()))
+    def get_avatar_url(self, obj):
+        request = self.context.get('request')
+        if obj.avatar and hasattr(obj.avatar, 'url'):
+            # build_absolute_uri sẽ tự động thêm http://<domain>:<port> vào trước
+            return request.build_absolute_uri(obj.avatar.url)
+        # Trả về null hoặc một URL avatar mặc định nếu không có avatar
+        return None
 
-# ===================================================================
-# == SỬA ĐỔI TẠI ĐÂY: TaiKhoanCreateSerializer
-# ===================================================================
 class TaiKhoanCreateSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True, style={'input_type': 'password'}, label="Xác nhận mật khẩu")
     groups = serializers.PrimaryKeyRelatedField(queryset=DjangoGroup.objects.all(), many=True, required=False, allow_empty=True)
@@ -88,9 +94,6 @@ class TaiKhoanCreateSerializer(serializers.ModelSerializer):
             user.groups.set(groups_data)
         return user
 
-# ===================================================================
-# == SỬA ĐỔI TẠI ĐÂY: TaiKhoanUpdateSerializer
-# ===================================================================
 class TaiKhoanUpdateSerializer(serializers.ModelSerializer):
     groups = serializers.PrimaryKeyRelatedField(queryset=DjangoGroup.objects.all(), many=True, required=False)
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -98,7 +101,7 @@ class TaiKhoanUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TaiKhoan
-        fields = ['id', 'ho_ten', 'email', 'groups', 'is_active', 'is_staff', 'password', 'password2', 'ten_dang_nhap']
+        fields = ['id', 'ho_ten', 'email', 'groups', 'is_active', 'is_staff', 'password', 'password2', 'ten_dang_nhap', 'avatar']
         read_only_fields = ['ten_dang_nhap']
 
     def validate(self, attrs):
@@ -301,3 +304,23 @@ class PasswordResetRequestSerializer(serializers.Serializer):
             pass
         return value
 
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(required=True, label="Mật khẩu hiện tại")
+    new_password = serializers.CharField(required=True, label="Mật khẩu mới")
+    confirm_password = serializers.CharField(required=True, label="Xác nhận mật khẩu mới")
+
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Mật khẩu hiện tại không chính xác.")
+        return value
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({"new_password": "Mật khẩu mới và mật khẩu xác nhận không khớp."})
+        try:
+            validate_password(attrs['new_password'], self.context['request'].user)
+        except serializers.ValidationError as e:
+            raise serializers.ValidationError({'new_password': list(e.messages)})
+            
+        return attrs
