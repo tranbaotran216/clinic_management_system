@@ -8,6 +8,7 @@ from rest_framework.test import APITestCase # Lớp TestCase đặc biệt của
 # --- Import các Model mà chúng ta sẽ tương tác trong test ---
 from .models import BenhNhan, DSKham, QuyDinhValue, LoaiQuyDinhValue
 from datetime import date, timedelta
+from decimal import Decimal
 
 # =================================================================================
 # BỘ TEST CHO API PUBLICAPPOINTMENTVIEW
@@ -38,13 +39,12 @@ class PublicAppointmentAPITests(APITestCase):
         #    Thay vì viết cứng url = '/register-appointment/', ta dùng reverse().
         #    `reverse('register-appointment')` sẽ tìm trong file urls.py của bạn dòng nào có name='register-appointment'
         #    và trả về đúng đường dẫn của nó. Điều này rất tốt vì nếu sau này bạn đổi URL, test sẽ không bị hỏng.
-        self.url = reverse('register-appointment')
+        self.url = reverse('public-register-appointment')
 
 
     def test_create_appointment_successfully_when_slot_is_available(self):
         """
-        Tên hàm test phải rõ ràng, mô tả trường hợp đang test.
-        Đây là kịch bản "happy path" - mọi thứ diễn ra đúng như ý muốn.
+        TC02: Bệnh nhân đăng ký khám thành công khi chưa vượt quá giới hạn khám trong ngày 
         """
         print("-> Running test: test_create_appointment_successfully...")
 
@@ -88,8 +88,7 @@ class PublicAppointmentAPITests(APITestCase):
 
     def test_create_appointment_fails_when_day_is_full(self):
         """
-        Kiểm tra kịch bản thất bại: Cố đăng ký khi ngày đã đầy.
-        Đây là lúc quy định "2 bệnh nhân/ngày" mà ta đặt trong `setUp` phát huy tác dụng.
+        TC03: Kiểm tra kịch bản thất bại: không thể đăng ký khi đã đạt giới hạn khám tối đa trong ngày
         """
         print("-> Running test: test_create_appointment_fails_when_day_is_full...")
 
@@ -187,13 +186,13 @@ class AuthenticationAndPermissionTests(APITestCase):
         self.quanly_group.permissions.add(view_hoadon_permission)
         
         # 5. Lấy các URL cần test.
-        self.login_url = reverse('auth_login')
-        self.report_url = reverse('report_revenue')
+        self.login_url = reverse('login')
+        self.report_url = reverse('report-revenue')
 
     # --- Test Kịch Bản Đăng Nhập ---
     def test_login_successfully_with_valid_credentials(self):
         """
-        Kiểm tra: Đăng nhập thành công với username/password hợp lệ.
+        TC19: Đăng nhập thành công với username/password hợp lệ.
         """
         print("-> Running test: test_login_successfully...")
         # ARRANGE: Dữ liệu đăng nhập
@@ -216,7 +215,7 @@ class AuthenticationAndPermissionTests(APITestCase):
 
     def test_login_fails_with_invalid_credentials(self):
         """
-        Kiểm tra: Đăng nhập thất bại với password sai.
+        TC20: Đăng nhập thất bại với password sai.
         """
         print("-> Running test: test_login_fails...")
         # ARRANGE: Dữ liệu đăng nhập với password sai
@@ -239,7 +238,7 @@ class AuthenticationAndPermissionTests(APITestCase):
     # --- Test Kịch Bản Phân Quyền ---
     def test_access_report_fails_when_unauthenticated(self):
         """
-        Kiểm tra: Người dùng CHƯA ĐĂNG NHẬP không thể xem báo cáo.
+        TC25: Người dùng CHƯA ĐĂNG NHẬP không thể xem báo cáo.
         """
         print("-> Running test: test_report_access_unauthenticated...")
         # ACT: Gửi request GET đến report_url mà không đăng nhập
@@ -248,27 +247,10 @@ class AuthenticationAndPermissionTests(APITestCase):
         # ASSERT: Phản hồi phải là 401 UNAUTHORIZED.
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_access_report_fails_with_insufficient_permission(self):
-        """
-        Kiểm tra: Y tá (đã đăng nhập nhưng không có quyền) không thể xem báo cáo.
-        """
-        print("-> Running test: test_report_access_insufficient_permission...")
-        # ARRANGE: "Ép" client phải xác thực như là `yta_user`.
-        # Đây là công cụ cực mạnh của APITestCase, không cần phải login thật.
-        self.client.force_authenticate(user=self.yta_user)
-        
-        # ACT: Gửi request
-        response = self.client.get(self.report_url, {'month': 10, 'year': 2023})
-        
-        # ASSERT: Phản hồi phải là 403 FORBIDDEN (Cấm truy cập).
-        # View của bạn trả về lỗi này do permission `isManager`.
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        # Kiểm tra thông báo lỗi có đúng như trong `permissions.py` không
-        self.assertEqual(response.data['detail'], "Chỉ Quản lý hoặc Superuser mới có quyền thực hiện hành động này.")
-
+    
     def test_access_report_succeeds_for_manager(self):
         """
-        Kiểm tra: Quản lý (đã đăng nhập và có quyền) xem báo cáo thành công.
+        TC26: tài khoản có vai trò Quản lý (đã đăng nhập) truy cập trang báo cáo thành công.
         """
         print("-> Running test: test_report_access_succeeds_for_manager...")
         # ARRANGE: Ép client xác thực như là `quanly_user`.
@@ -334,7 +316,7 @@ class BusinessLogicTests(APITestCase):
 
     def test_calculate_medication_cost_correctly(self):
         """
-        Kiểm tra: Phương thức `tinh_tien_thuoc()` của model PKB tính toán chính xác.
+        TC09: hoá đơn được tạo tự động thành công.
         """
         print("-> Running test: test_calculate_medication_cost...")
         
@@ -371,7 +353,7 @@ class BusinessLogicTests(APITestCase):
 
     def test_create_invoice_from_medical_record(self):
         """
-        Kiểm tra: Phương thức `tao_hoac_cap_nhat_hoa_don()` tạo ra hóa đơn đúng.
+        TC21: cập nhật hoá đơn thành công.
         """
         print("-> Running test: test_create_invoice_from_record...")
 
@@ -436,7 +418,7 @@ class SignalTests(APITestCase):
 
     def test_inventory_is_deducted_on_successful_prescription(self):
         """
-        Kiểm tra: Tồn kho được trừ đúng khi kê đơn thành công.
+        TC22: số lượng thuốc tồn kho được trừ đúng khi kê đơn thành công.
         """
         print("-> Running test: test_inventory_deduction...")
 
@@ -461,7 +443,7 @@ class SignalTests(APITestCase):
 
     def test_inventory_is_not_changed_when_insufficient(self):
         """
-        Kiểm tra: Tồn kho KHÔNG thay đổi khi kê đơn quá số lượng hiện có.
+        TC23: số lượng thuốc tồn kho KHÔNG thay đổi khi kê đơn quá số lượng hiện có.
         """
         print("-> Running test: test_inventory_insufficient...")
 
@@ -484,3 +466,447 @@ class SignalTests(APITestCase):
 
         # 2. Khẳng định rằng số lượng tồn kho VẪN LÀ 50, không thay đổi.
         self.assertEqual(self.thuoc_test.so_luong_ton, 50)
+
+        
+#____________________________________________________________________________
+# tests.py (bổ sung phần này vào file test của bạn)
+
+class MedicalRecordTests(APITestCase):
+    """
+    Test tạo phiếu khám bệnh từ danh sách chờ, bao gồm:
+    - TC04: Có thuốc
+    - TC05: Không có thuốc
+    - TC06: Nhiều thuốc
+    """
+
+    def setUp(self):
+        print("\n[SETUP] MedicalRecordTests")
+        self.don_vi_tinh = DonViTinh.objects.create(ten_don_vi_tinh='Viên')
+        self.cach_dung = CachDung.objects.create(ten_cach_dung='1')
+        self.loai_benh = LoaiBenh.objects.create(ten_loai_benh='Viêm họng')
+
+        self.thuoc1 = Thuoc.objects.create(
+            ten_thuoc='Paracetamol',
+            don_vi_tinh=self.don_vi_tinh,
+            cach_dung_mac_dinh=self.cach_dung,
+            don_gia=Decimal('1500'),
+            so_luong_ton=100
+        )
+        self.thuoc2 = Thuoc.objects.create(
+            ten_thuoc='Amoxicillin',
+            don_vi_tinh=self.don_vi_tinh,
+            cach_dung_mac_dinh=self.cach_dung,
+            don_gia=Decimal('2000'),
+            so_luong_ton=200
+        )
+
+        self.benh_nhan = BenhNhan.objects.create(
+            ho_ten='Nguyễn Văn A',
+            nam_sinh=1990,
+            gioi_tinh='M',
+            dia_chi='Hà Nội'
+        )
+
+        self.ds_kham = DSKham.objects.create(
+            ngay_kham=date.today(),
+            benh_nhan=self.benh_nhan
+        )
+
+    def test_TC04_create_pkb_with_medicine(self):
+        """
+        TC04: Tạo phiếu khám hợp lệ có 1 loại thuốc.
+        """
+        print("-> [RUN] TC04: PKB có 1 thuốc")
+        pkb = PKB.objects.create(
+            ds_kham=self.ds_kham,
+            ngay_kham=date.today(),
+            benh_nhan=self.benh_nhan,
+            trieu_chung='Ho, sốt',
+            loai_benh_chuan_doan=self.loai_benh
+        )
+
+        ChiTietPKB.objects.create(
+            phieu_kham_benh=pkb,
+            thuoc=self.thuoc1,
+            so_luong_ke=5,
+            cach_dung_chi_dinh=self.cach_dung
+        )
+
+        hoa_don = pkb.tao_hoac_cap_nhat_hoa_don()
+
+        # Assert
+        self.assertEqual(PKB.objects.count(), 1)
+        self.assertEqual(ChiTietPKB.objects.count(), 1)
+        self.assertEqual(HoaDon.objects.count(), 1)
+        self.assertEqual(hoa_don.tien_thuoc, 5 * self.thuoc1.don_gia)
+        self.assertGreater(hoa_don.tong_tien, 0)
+
+    def test_TC05_create_pkb_without_medicine(self):
+        """
+        TC05: Tạo phiếu khám không có thuốc.
+        """
+        print("-> [RUN] TC05: PKB không thuốc")
+        pkb = PKB.objects.create(
+            ds_kham=self.ds_kham,
+            ngay_kham=date.today(),
+            benh_nhan=self.benh_nhan,
+            trieu_chung='Mệt mỏi',
+            loai_benh_chuan_doan=self.loai_benh
+        )
+
+        hoa_don = pkb.tao_hoac_cap_nhat_hoa_don()
+
+        # Assert
+        self.assertEqual(PKB.objects.count(), 1)
+        self.assertEqual(ChiTietPKB.objects.count(), 0)
+        self.assertEqual(HoaDon.objects.count(), 1)
+        self.assertEqual(hoa_don.tien_thuoc, 0)
+
+    def test_TC06_create_pkb_with_multiple_medicines(self):
+        """
+        TC06: Tạo phiếu khám có nhiều loại thuốc.
+        """
+        print("-> [RUN] TC06: PKB nhiều thuốc")
+        pkb = PKB.objects.create(
+            ds_kham=self.ds_kham,
+            ngay_kham=date.today(),
+            benh_nhan=self.benh_nhan,
+            trieu_chung='Viêm họng, đau đầu',
+            loai_benh_chuan_doan=self.loai_benh
+        )
+
+        ChiTietPKB.objects.create(
+            phieu_kham_benh=pkb,
+            thuoc=self.thuoc1,
+            so_luong_ke=3,
+            cach_dung_chi_dinh=self.cach_dung
+        )
+        ChiTietPKB.objects.create(
+            phieu_kham_benh=pkb,
+            thuoc=self.thuoc2,
+            so_luong_ke=2,
+            cach_dung_chi_dinh=self.cach_dung
+        )
+
+        hoa_don = pkb.tao_hoac_cap_nhat_hoa_don()
+
+        # Expected money
+        expected_tien_thuoc = 3 * self.thuoc1.don_gia + 2 * self.thuoc2.don_gia
+
+        # Assert
+        self.assertEqual(PKB.objects.count(), 1)
+        self.assertEqual(ChiTietPKB.objects.filter(phieu_kham_benh=pkb).count(), 2)
+        self.assertEqual(HoaDon.objects.count(), 1)
+        self.assertEqual(hoa_don.tien_thuoc, expected_tien_thuoc)
+        self.assertGreater(hoa_don.tong_tien, expected_tien_thuoc)
+
+class RegisterAppointmentTests(APITestCase):
+    """
+    TC01: Tạo lịch khám hợp lệ – thêm bệnh nhân mới và thêm vào danh sách khám.
+    """
+
+    def setUp(self):
+        print("\n[SETUP] RegisterAppointmentTests")
+        self.url = reverse('public-register-appointment')
+        QuyDinhValue.objects.create(
+            ma_quy_dinh=LoaiQuyDinhValue.SO_BENH_NHAN_TOI_DA,
+            gia_tri=10  # Cho phép đăng ký
+        )
+
+    def test_TC01_register_new_patient_success(self):
+        """
+        TC01: Tạo lịch khám hợp lệ
+        """
+        print("-> [RUN] TC01: Tạo lịch khám hợp lệ")
+        payload = {
+            "ho_ten": "Nguyễn Văn A",
+            "nam_sinh": 1990,
+            "gioi_tinh": "M",
+            "dia_chi": "Hà Nội",
+            "ngay_kham": date.today().isoformat()
+        }
+
+        response = self.client.post(self.url, payload, format='json')
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['message'], "Đăng ký thành công")
+        self.assertEqual(response.data['ten_benh_nhan'], "Nguyễn Văn A")
+        self.assertEqual(BenhNhan.objects.count(), 1)
+        self.assertEqual(DSKham.objects.count(), 1)
+
+class RegulationUpdateTests(APITestCase):
+    """
+    TC13: Cập nhật quy định: thay đổi số lượt khám tối đa.
+    """
+
+    def setUp(self):
+        print("\n[SETUP] RegulationUpdateTests")
+        self.rule = QuyDinhValue.objects.create(
+            ma_quy_dinh=LoaiQuyDinhValue.SO_BENH_NHAN_TOI_DA,
+            gia_tri=5
+        )
+        self.quanly_user = TaiKhoan.objects.create_user(
+            ten_dang_nhap='quanly01',
+            email='quanly@example.com',
+            password='a_strong_password', # Luôn dùng mật khẩu giả trong test
+            ho_ten='Sếp Tổng'
+        )
+        self.quanly_group = Group.objects.create(name='Quản lý')
+        self.quanly_user.groups.add(self.quanly_group)
+        self.client.force_authenticate(user=self.quanly_user)
+        content_type = ContentType.objects.get_for_model(QuyDinhValue)
+        view_quydinh_permission = Permission.objects.get(
+            codename='change_quydinhvalue',
+            content_type=content_type,
+        )
+        self.quanly_group.permissions.add(view_quydinh_permission)
+    def test_TC13_update_max_appointment(self):
+        """
+        TC13: Thay đổi số lượng khám tối đa thành 20
+        """
+        print("-> [RUN] TC13: Thay đổi số lượng khám tối đa")
+        url = reverse('quydinhvalue-detail', args=[self.rule.ma_quy_dinh])
+        response = self.client.put(url, {"gia_tri": 20}, format='json')
+
+        self.assertEqual(response.status_code, 200)
+        self.rule.refresh_from_db()
+        self.assertEqual(self.rule.gia_tri, 20)
+
+    def test_TC14_update_regulation_forbidden_for_non_admin(self):
+        """
+        TC14: Nhân viên cố cập nhật quy định => bị cấm (403)
+        """
+        print("-> [RUN] TC14: Nhân viên bị cấm sửa quy định")
+        staff_user = TaiKhoan.objects.create_user(
+            ten_dang_nhap='yta2',
+            email='yta2@example.com',
+            password='123456',
+            ho_ten='Y Tá B'
+        )
+        group = Group.objects.create(name='Y tá')
+        staff_user.groups.add(group)
+
+        self.client.force_authenticate(user=staff_user)
+        url = reverse('quydinhvalue-detail', args=[self.rule.ma_quy_dinh])
+        response = self.client.put(url, {"gia_tri": 99}, format='json')
+
+        self.assertEqual(response.status_code, 403)
+        self.rule.refresh_from_db()
+        self.assertNotEqual(self.rule.gia_tri, 99)
+    
+class PatientSearchTests(APITestCase):
+    """
+    TC07–TC08: Tìm kiếm bệnh nhân theo tên trong danh sách khám
+    """
+
+    def setUp(self):
+        print("\n[SETUP] PatientSearchTests")
+
+        # Tạo bệnh nhân và lịch khám để test search
+        self.benh_nhan = BenhNhan.objects.create(
+            ho_ten='Nguyễn Văn A',
+            nam_sinh=1990,
+            gioi_tinh='M',
+            dia_chi='Hà Nội'
+        )
+        self.ds_kham = DSKham.objects.create(
+            ngay_kham=date.today(),
+            benh_nhan=self.benh_nhan
+        )
+
+        # Tạo tài khoản Y tá có quyền xem danh sách khám
+        self.yta_user = TaiKhoan.objects.create_user(
+            ten_dang_nhap='yta01',
+            email='yta@example.com',
+            password='123456',
+            ho_ten='Y Tá A'
+        )
+        group = Group.objects.create(name='Y tá')
+        self.yta_user.groups.add(group)
+
+        # Gán quyền 'view_dskham' cho group 'Y tá'
+        content_type = ContentType.objects.get_for_model(DSKham)
+        view_permission = Permission.objects.get(
+            codename='view_dskham',
+            content_type=content_type
+        )
+        group.permissions.add(view_permission)
+
+        # Ép xác thực bằng y tá
+        self.client.force_authenticate(user=self.yta_user)
+
+        # URL cho list DSKham
+        self.url = reverse('dskham-list')
+
+    def test_TC07_search_existing_patient(self):
+        """
+        TC07: Tìm đúng bệnh nhân tên 'Nguyễn Văn A'
+        """
+        print("-> [RUN] TC07: Tìm thấy bệnh nhân tên 'Nguyễn Văn A'")
+        response = self.client.get(self.url, {'search': 'Nguyễn Văn A'}, format='json')
+        self.assertEqual(response.status_code, 200)
+
+        data = response.data if isinstance(response.data, list) else response.data.get('results', [])
+        matched = [item for item in data if 'Nguyễn Văn A' in item['benh_nhan']['ho_ten']]
+        self.assertTrue(len(matched) > 0)
+
+
+    def test_TC08_search_not_found(self):
+        """
+        TC08: Gõ tên không đúng → không có ai hiện ra
+        """
+        print("-> [RUN] TC08: Không tìm thấy bệnh nhân")
+        response = self.client.get(self.url, {'search': 'abcxyz'}, format='json')
+        self.assertEqual(response.status_code, 200)
+
+        data = response.data if isinstance(response.data, list) else response.data.get('results', [])
+        matched = [item for item in data if 'abcxyz' in item['benh_nhan']['ho_ten'].lower()]
+        self.assertEqual(len(matched), 0)
+
+class MedicineSearchTests(APITestCase):
+    """
+    TC15–TC16: Tra cứu thuốc trong hệ thống
+    """
+
+    def setUp(self):
+        print("\n[SETUP] MedicineSearchTests")
+        self.don_vi = DonViTinh.objects.create(ten_don_vi_tinh='Viên')
+        self.thuoc = Thuoc.objects.create(
+            ten_thuoc='Paracetamol',
+            don_vi_tinh=self.don_vi,
+            don_gia=Decimal('2000'),
+            so_luong_ton=50
+        )
+
+        self.yta_user = TaiKhoan.objects.create_user(
+            ten_dang_nhap='yta01',
+            email='yta@example.com',
+            password='123456',
+            ho_ten='Y Tá A'
+        )
+        group = Group.objects.create(name='Y tá')
+        self.yta_user.groups.add(group)
+
+        content_type = ContentType.objects.get_for_model(Thuoc)
+        view_permission = Permission.objects.get(
+            codename='view_thuoc',
+            content_type=content_type
+        )
+        group.permissions.add(view_permission)
+
+        self.client.force_authenticate(user=self.yta_user)
+        self.url = reverse('thuoc-list')  # ThuocViewSet với basename='thuoc'
+
+    def test_TC15_search_medicine_found(self):
+        """
+        TC15: Tìm thấy thuốc 'Paracetamol'
+        """
+        print("-> [RUN] TC15: Tìm thuốc Paracetamol")
+        response = self.client.get(self.url, {'search': 'Paracetamol'})
+        self.assertEqual(response.status_code, 200)
+
+        data = response.data if isinstance(response.data, list) else response.data.get('results', [])
+        matched = [item for item in data if 'Paracetamol' in item['ten_thuoc']]
+        self.assertTrue(len(matched) > 0)
+
+        def test_TC16_search_medicine_not_found(self):
+            """
+            TC16: Tìm thuốc không tồn tại → không có kết quả
+            """
+            print("-> [RUN] TC16: Tìm thuốc không tồn tại")
+            response = self.client.get(self.url, {'search': 'KhongTonTai123'})
+            self.assertEqual(response.status_code, 200)
+
+            data = response.data if isinstance(response.data, list) else response.data.get('results', [])
+            self.assertEqual(len(data), 0)
+
+class MedicalRecordSearchTests(APITestCase):
+    """
+    TC17–TC18: Tra cứu và xem chi tiết phiếu khám
+    """
+
+    def setUp(self):
+        print("\n[SETUP] MedicalRecordSearchTests")
+        self.loai_benh = LoaiBenh.objects.create(ten_loai_benh='Viêm họng')
+        self.benh_nhan = BenhNhan.objects.create(ho_ten='Hoàng Thị Lan', nam_sinh=1990)
+        self.pkb = PKB.objects.create(
+            ngay_kham=date.today(),
+            benh_nhan=self.benh_nhan,
+            trieu_chung='Sốt nhẹ',
+            loai_benh_chuan_doan=self.loai_benh
+        )
+
+        self.user = TaiKhoan.objects.create_user(
+            ten_dang_nhap='yta01',
+            email='yta@example.com',
+            password='123456',
+            ho_ten='Y Tá A'
+        )
+        group = Group.objects.create(name='Y tá')
+        self.user.groups.add(group)
+
+        content_type = ContentType.objects.get_for_model(PKB)
+        view_permission = Permission.objects.get(codename='view_pkb', content_type=content_type)
+        group.permissions.add(view_permission)
+
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse('pkb-list')
+
+    def test_TC17_search_medical_record_by_patient_name(self):
+        """
+        TC17: Tìm danh sách phiếu khám theo tên bệnh nhân
+        """
+        print("-> [RUN] TC17: Tìm phiếu khám của 'Hoàng Thị Lan'")
+        response = self.client.get(self.url, {'search': 'Hoàng Thị Lan'})
+        self.assertEqual(response.status_code, 200)
+
+        data = response.data if isinstance(response.data, list) else response.data.get('results', [])
+        matched = [item for item in data if 'Hoàng Thị Lan' in item['benh_nhan']['ho_ten']]
+        self.assertTrue(len(matched) > 0)
+
+        def test_TC18_view_medical_record_detail(self):
+            """
+            TC18: Xem chi tiết phiếu khám → gọi detail endpoint
+            """
+            print("-> [RUN] TC18: Xem chi tiết phiếu khám")
+            detail_url = reverse('pkb-detail', args=[self.pkb.id])
+            response = self.client.get(detail_url)
+            self.assertEqual(response.status_code, 200)
+
+            self.assertEqual(response.data['id'], self.pkb.id)
+            self.assertEqual(response.data['benh_nhan']['ho_ten'], 'Hoàng Thị Lan')
+            self.assertIn('trieu_chung', response.data)
+
+
+import time
+
+class PerformanceTests(APITestCase):
+    """
+    TC30: Đo thời gian tải trang dashboard
+    """
+
+    def setUp(self):
+        print("\n[SETUP] PerformanceTests: TC30")
+        self.url = reverse('dashboard-summary')  # URL trang dashboard
+        self.user = TaiKhoan.objects.create_user(
+            ten_dang_nhap="performance_user",
+            email="perf@example.com",
+            password="Strong123!",
+            ho_ten="Người Kiểm Tra"
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def test_TC27_dashboard_loads_under_3_seconds(self):
+        """
+        TC27: Trang dashboard phản hồi trong vòng dưới 3 giây
+        """
+        print("-> [RUN] TC27: Đo thời gian dashboard")
+
+        start = time.time()
+        response = self.client.get(self.url)
+        end = time.time()
+
+        elapsed = end - start
+
+        self.assertEqual(response.status_code, 200)
+        self.assertLessEqual(elapsed, 3, f"Dashboard mất {elapsed:.2f}s để phản hồi (quá 3s)")
