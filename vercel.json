@@ -2,23 +2,26 @@
   "version": 2,
   "builds": [
     {
-      "src": "clinic_management_system/wsgi.py",
-      "use": "@vercel/python",
-      "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
+      "src": "backend/clinic_management_system/wsgi.py",
+      "use": "@vercel/python"
     },
     {
-      "src": "static_root",
+      "src": "frontend/**",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
+      "src": "/api/(.*)",
+      "dest": "backend/clinic_management_system/wsgi.py"
+    },
+    {
+      "src": "/admin/(.*)",
+      "dest": "backend/clinic_management_system/wsgi.py"
     },
     {
       "src": "/(.*)",
-      "dest": "clinic_management_system/wsgi.py"
+      "dest": "/frontend/$1"
     }
   ]
 }
