@@ -9,3 +9,5 @@ dist/
 phongkham/
 myenv/
 test/
+# Local Netlify folder
+.netlify

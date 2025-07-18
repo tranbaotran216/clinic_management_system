@@ -2,11 +2,12 @@
   "version": 2,
   "builds": [
     {
-      "src": "main.py",
-      "use": "@vercel/python"
+      "src": "clinic_management_system/wsgi.py",
+      "use": "@vercel/python",
+      "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
     },
     {
-      "src": "static/**",
+      "src": "static_root",
       "use": "@vercel/static"
     }
   ],
@@ -17,7 +18,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "main.py"
+      "dest": "clinic_management_system/wsgi.py"
     }
   ]
 }

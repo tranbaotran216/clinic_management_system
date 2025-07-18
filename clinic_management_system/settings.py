@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-(sdc@4a*#$(#6=q=pw6zt)wdn--5-@gxxzzumm^p5)lwhwdj)r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [os.environ.get('VERCEL_URL', '.vercel.app'), '127.0.0.1']
 
 
 # Application definition
@@ -182,3 +182,10 @@ DEFAULT_FROM_EMAIL = f"Phòng Mạch Medical Clinic <{EMAIL_HOST_USER}>"
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
+# Cấu hình file tĩnh
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'), # Giả sử bạn có thư mục static ở gốc
+]
+STATIC_ROOT = os.path.join(BASE_DIR, 'static_root') # Đây là thư mục Vercel sẽ dùng
