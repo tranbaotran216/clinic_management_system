@@ -1,0 +1,120 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dịch vụ của chúng tôi - Medical Clinic</title>
+    <link rel="stylesheet" href="{% static 'pages/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container navbar">
+            <div class="logo">
+                <img src="{% static 'pages/images/plus_sign.png' %}" alt="Medical Clinic Logo">
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <!-- SỬA CÁC URL ĐỂ KHÔNG DÙNG NAMESPACE -->
+                    <li><a href="{% url 'home' %}">Trang chủ</a></li>
+                    <li><a href="{% url 'services' %}" class="active">Dịch vụ</a></li>
+                    <li><a href="{% url 'about' %}">Giới thiệu</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons">
+                <!-- ================== SỬA LIÊN KẾT ĐẾN REACT ================== -->
+                <a href="/app/login" class="btn btn-login">Đăng nhập</a>
+                <a href="/app/register-appointment" class="btn btn-register">Đăng ký khám bệnh</a>
+                <!-- ============================================================= -->
+            </div>
+        </div>
+    </header>
+
+    <section class="page-title-section">
+        <div class="container">
+            <h2>Dịch vụ</h2>
+        </div>
+    </section>
+
+    <section class="services-content-wrapper">
+        <div class="container services-container">
+            <button class="nav-arrow left-arrow" onclick="scrollServices(-1)">
+                <img src="{% static 'pages/images/back.png' %}" alt="Previous">
+            </button>
+
+            <div class="service-grid" id="serviceGrid">
+                <div class="service-card">
+                    <div class="service-image-wrapper">
+                        <img src="{% static 'pages/images/xetnghiemmau.png' %}" alt="Xét nghiệm máu icon">
+                    </div>
+                    <h3>Xét nghiệm máu</h3>
+                    <p>Đánh giá sức khỏe tổng quát, phát hiện sớm các bệnh lý như thiếu máu, tiểu đường, nhiễm trùng, mỡ máu,...</p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-image-wrapper">
+                        <img src="{% static 'pages/images/captoathuoc.png' %}" alt="Đo huyết áp và nhịp tim icon">
+                    </div>
+                    <h3>Đo huyết áp và nhịp tim</h3>
+                    <p>Theo dõi các chỉ số tim mạch, hỗ trợ phát hiện sớm các bất thường về huyết áp hoặc rối loạn nhịp tim.</p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-image-wrapper">
+                        <img src="{% static 'pages/images/dohuyetap.png' %}" alt="Cấp toa thuốc định kỳ icon">
+                    </div>
+                    <h3>Cấp toa thuốc định kỳ</h3>
+                    <p>Hỗ trợ cấp lại đơn thuốc cho bệnh nhân mắc các bệnh mãn tính như tăng huyết áp, tiểu đường, viêm khớp.</p>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-image-wrapper">
+                        <img src="{% static 'pages/images/medicalcheckup.png' %}" alt="Khám tổng quát">
+                    </div>
+                    <h3>Khám tổng quát</h3>
+                    <p>Kiểm tra toàn diện sức khỏe, phát hiện sớm các vấn đề tiềm ẩn và tư vấn lối sống lành mạnh.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-image-wrapper">
+                        <img src="{% static 'pages/images/vaccination.png' %}" alt="Tiêm phòng">
+                    </div>
+                    <h3>Tiêm phòng</h3>
+                    <p>Cung cấp các loại vắc-xin cần thiết cho trẻ em và người lớn, giúp phòng ngừa bệnh truyền nhiễm.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-image-wrapper">
+                        <img src="{% static 'pages/images/nutritionplan.png' %}" alt="Tư vấn dinh dưỡng">
+                    </div>
+                    <h3>Tư vấn dinh dưỡng</h3>
+                    <p>Chuyên gia dinh dưỡng sẽ tư vấn chế độ ăn uống phù hợp với từng tình trạng sức khỏe và mục tiêu của bạn.</p>
+                </div>
+                </div>
+
+            <button class="nav-arrow right-arrow" onclick="scrollServices(1)">
+                <img src="{% static 'pages/images/next.png' %}" alt="Next">
+            </button>
+        </div>
+    </section>
+    <script>
+        const serviceGrid = document.getElementById('serviceGrid');
+        const scrollAmount = 3; 
+
+        function scrollServices(direction) {
+            const serviceCards = serviceGrid.querySelectorAll('.service-card');
+            const totalCards = serviceCards.length;
+            const currentScrollLeft = serviceGrid.scrollLeft;
+            const cardWidth = serviceCards.length > 0 ? serviceCards[0].offsetWidth + (parseFloat(window.getComputedStyle(serviceGrid).getPropertyValue('grid-gap')) || 0) : 0; 
+
+            const newScrollPosition = currentScrollLeft + (direction * cardWidth * scrollAmount);
+
+            const maxScrollLeft = serviceGrid.scrollWidth - serviceGrid.clientWidth;
+            
+            serviceGrid.scrollTo({
+                left: Math.max(0, Math.min(newScrollPosition, maxScrollLeft)),
+                behavior: 'smooth'
+            });
+        }
+    </script>
+</body>
+</html>

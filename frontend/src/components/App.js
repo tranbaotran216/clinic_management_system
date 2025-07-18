@@ -5,6 +5,10 @@ import PrivateRoute from "./PrivateRoutes";
 import DashboardLayout from "./DashboardLayout";
 
 // --- Import các trang ---
+import LandingPage from './LandingPage'; 
+// Giả sử có 2 trang tĩnh khác là ServicesPage và AboutPage
+import ServicesPage from './ServicesPage'; 
+import AboutPage from './AboutPage';
 import LoginPage from "./LoginPage";
 import UnAuthorized from "./UnAuthorized";
 import RegisterAppointmentPage from "./RegisterAppointmentPage";
@@ -107,8 +111,11 @@ export default function App() {
         <ThemeContext.Provider value={themeContextValue}>
             <ConfigProvider theme={antdTheme}>
                 <AuthProvider>
-                    <BrowserRouter basename="/app">
+                    <BrowserRouter>
                         <Routes>
+                            <Route path="/" element={<LandingPage />} />
+                            <Route path="/services" element={<ServicesPage />} /> {/* <-- THÊM DÒNG NÀY */}
+                            <Route path="/about" element={<AboutPage />} />
                             {/* --- Các Route không thay đổi --- */}
                             <Route path="/login" element={<LoginPage />} />
                             <Route path="/register-appointment" element={<RegisterAppointmentPage />} />
