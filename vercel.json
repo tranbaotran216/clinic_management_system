@@ -1,19 +1,12 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "backend/clinic_management_system/wsgi.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "frontend/**",
-      "use": "@vercel/static"
-    }
+    { "src": "backend/clinic_management_system/wsgi.py", "use": "@vercel/python" },
+    { "src": "frontend/package.json", "use": "@vercel/static-build", "config": { "distDir": "dist" } }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "backend/clinic_management_system/wsgi.py" },
     { "src": "/admin/(.*)", "dest": "backend/clinic_management_system/wsgi.py" },
-    { "src": "/(.*\\..*)", "dest": "/frontend/$1" },
-    { "src": "/(.*)", "dest": "/frontend/index.html" }
+    { "src": "/(.*)", "dest": "frontend/dist/$1" }
   ]
 }
